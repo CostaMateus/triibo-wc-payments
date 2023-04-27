@@ -39,6 +39,14 @@ class Triibo_WC_Payments
 	const DOMAIN  = "triibo_wc_payments";
 
 	/**
+	 * Plugin main file.
+	 *
+	 * @since 	1.0.0
+	 * @var 	string
+	 */
+	const FILE    = __FILE__;
+
+	/**
 	 * Instance of this class.
 	 *
 	 * @since 	1.0.0
@@ -71,12 +79,14 @@ class Triibo_WC_Payments
 			return;
 		}
 
-		add_filter( "plugin_action_links_" . plugin_basename( __FILE__ ), [ $this, "plugin_action_links" ] );
+		include_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-billet.php" );
+		include_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-card.php"   );
+		include_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-pix.php"    );
 
-		// add_filter( ""woocommerce_payment_gateways, [ $this, "register_gateway" ], 99, 1 );
+		add_filter( "plugin_action_links_" . plugin_basename( __FILE__ ), [ $this, "plugin_action_links" ]        );
+		add_filter( "woocommerce_payment_gateways",                       [ $this, "register_gateways"   ], 99, 1 );
 
 		// include_once dirname( __FILE__ ) . "/includes/class-triibo-assinatura-api.php";
-		// include_once dirname( __FILE__ ) . "/includes/class-triibo-assinatura-gateway.php";
 		// require_once dirname( __FILE__ ) . "/includes/rest-api/class-triibo-assinatura-rest.php";
 
 		// add_action( "admin_menu",                          [ $this, "add_submenu_page"    ], 11 );
@@ -146,6 +156,22 @@ class Triibo_WC_Payments
 		$plugin_links[] = "<a href='{$url}' >{$text}</a>";
 
 		return array_merge( $plugin_links, $links );
+	}
+
+	/**
+	 * Register the gateway for use
+	 *
+	 * @since 	1.0.0
+	 * @param 	array $methods
+	 * @return 	array
+	 */
+	public function register_gateways( $methods )
+    {
+		$methods[] = "Triibo_Payment_Billet";
+		$methods[] = "Triibo_Payment_Card";
+		$methods[] = "Triibo_Payment_Pix";
+
+		return $methods;
 	}
 
 }
