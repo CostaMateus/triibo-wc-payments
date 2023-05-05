@@ -3,7 +3,7 @@
  * Triibo Payments Rest class
  *
  * @author      Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_WC_Payments/Rest
+ * @package 	Triibo_Payments/Rest
  * @version 	1.0.0
  */
 defined( 'ABSPATH' ) || exit;
@@ -17,6 +17,7 @@ class Triibo_Payments_Rest
 	 */
     public function __construct()
 	{
+		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-cards-controller.php";
 		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-orders-controller.php";
 
         add_action( "rest_api_init", [ $this, "register_rest_routes" ] );
@@ -51,7 +52,8 @@ class Triibo_Payments_Rest
         return apply_filters(
             "triibo_payments_rest_namespaces",
             [
-                "triibo-wc-payments/v1" => [
+                "triibo-payments/v1" => [
+                    "cards"  => "Triibo_Cards_Controller",
                     "orders" => "Triibo_Orders_Controller",
                 ]
             ]

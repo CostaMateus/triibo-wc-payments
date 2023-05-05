@@ -3,7 +3,7 @@
  * Missing WooCommerce notice.
  *
  * @author 		Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_WC_Payments/Notices
+ * @package 	Triibo_Payments/Notices
  * @version 	1.0.0
  */
 defined( "ABSPATH" ) || exit;
@@ -21,15 +21,15 @@ if ( function_exists( "get_plugins" ) )
 <div class="error" >
 	<p>
 		<strong>
-			<?php esc_html_e( "#Triibo_WooCommerce_Payments", Triibo_WC_Payments::DOMAIN ); ?>
+			<?php esc_html_e( "#Triibo_Payments", Triibo_Payments::DOMAIN ); ?>
 		</strong>
-		<?php esc_html_e( "depende da última versão do 'WooCommerce' para funcionar!", Triibo_WC_Payments::DOMAIN ); ?>
+		<?php esc_html_e( "depende da última versão do 'WooCommerce' para funcionar!", Triibo_Payments::DOMAIN ); ?>
 	</p>
 
 	<?php if ( $is_installed && current_user_can( "install_plugins" ) ) : ?>
 		<p>
 			<a href="<?php echo esc_url( wp_nonce_url( self_admin_url( "plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=active" ), "activate-plugin_woocommerce/woocommerce.php" ) ); ?>" class="button button-primary" >
-				<?php esc_html_e( "Ative WooCommerce", Triibo_WC_Payments::DOMAIN ); ?>
+				<?php esc_html_e( "Ative WooCommerce", Triibo_Payments::DOMAIN ); ?>
 			</a>
 		</p>
 	<?php else :
@@ -37,7 +37,7 @@ if ( function_exists( "get_plugins" ) )
 	?>
 		<p>
 			<a href="<?php echo esc_url( $url ); ?>" class="button button-primary" >
-				<?php esc_html_e( "Instale WooCommerce", Triibo_WC_Payments::DOMAIN ); ?>
+				<?php esc_html_e( "Instale WooCommerce", Triibo_Payments::DOMAIN ); ?>
 			</a>
 		</p>
 	<?php endif; ?>

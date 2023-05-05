@@ -3,7 +3,7 @@
  * Triibo Payment Billet class
  *
  * @author      Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_WC_Payments/Gateways
+ * @package 	Triibo_Payments/Gateways
  * @version 	1.0.0
  */
 defined( "ABSPATH" ) || exit;
@@ -67,8 +67,8 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway_CC
 	{
 		self::$instance = $this;
 
-        $this->id                 = Triibo_WC_Payments::DOMAIN . "_billet";
-        $this->icon               = apply_filters( "woocommerce_" . $this->id . "_icon", plugins_url( "assets/images/triibo-25-cor-completo.png", Triibo_WC_Payments::FILE ) );
+        $this->id                 = Triibo_Payments::DOMAIN . "_billet";
+        $this->icon               = apply_filters( "woocommerce_" . $this->id . "_icon", plugins_url( "assets/images/triibo-25-cor-completo.png", Triibo_Payments::FILE ) );
 
         $this->method_title       = __( "Triibo Boleto",                                  $this->id );
         $this->method_description = __( "Pagamentos com boleto usando a Triibo Gateway.", $this->id );

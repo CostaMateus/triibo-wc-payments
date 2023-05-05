@@ -3,7 +3,7 @@
  * Triibo Orders Controller class
  *
  * @author      Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_WC_Payments/Rest
+ * @package 	Triibo_Payments/Rest
  * @version 	1.0.0
  */
 defined( "ABSPATH" ) || exit;
@@ -16,7 +16,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	 * @since   1.0.0
 	 * @var 	string
 	 */
-	protected $namespace = "triibo-wc-payments/v1";
+	protected $namespace = "triibo-payments/v1";
 
 	/**
 	 * Route base.
@@ -117,7 +117,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
         {
             if ( $approved )
             {
-                $this->log->add( Triibo_WC_Payments::DOMAIN, "INFO - finalize_order : ID " . $order_id . " : " . $status );
+                $this->log->add( Triibo_Payments::DOMAIN, "INFO - finalize_order : ID " . $order_id . " : " . $status );
 
                 $order->payment_complete();
                 $order->update_status( "processing" );
@@ -125,7 +125,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
                 return;
             }
 
-            $this->log->add( Triibo_WC_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
+            $this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
 
             // TODO confirmar com Pedro, se 'cancelled' ou 'failed'
             $order->update_status( "failed" );
