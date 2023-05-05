@@ -95,9 +95,42 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
         if ( $this->debug == "yes" ) $this->log = ( function_exists( "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
 
         $this->node = new Triibo_Api_Node();
-        // $this->api = new Triibo_Payment_Api( $this, $this->node );
+        $this->api  = new Triibo_Payments_Api( $this, $this->node );
 
         $this->init_actions_filters();
+	}
+
+	/**
+	 * Get id
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_id()
+	{
+		return $this->id;
+	}
+
+	/**
+	 * Get debug
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_debug()
+	{
+		return $this->debug;
+	}
+
+	/**
+	 * Get log
+	 *
+	 * @since 	1.0.0
+	 * @return 	wc_get_logger|WC_Logger
+	 */
+	public function get_log()
+	{
+		return $this->log;
 	}
 
 	/**
@@ -214,7 +247,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 */
 	public function init_actions_filters()
 	{
-		// add_action( "wp_enqueue_scripts",                                                   [ $this, "checkout_scripts"                                  ]        );
+		add_action( "wp_enqueue_scripts",                                                   [ $this, "checkout_scripts"                                  ]        );
 		// add_action( "woocommerce_scheduled_subscription_payment_"              . $this->id, [ $this, "scheduled_subscription_payment"                    ], 10, 2 );
 		// add_action( "woocommerce_update_options_payment_gateways_"             . $this->id, [ $this, "process_admin_options"                             ]        );
 		// add_action( "woocommerce_subscription_failing_payment_method_updated_" . $this->id, [ $this, "update_failing_payment_method"                     ], 10, 2 );
@@ -222,6 +255,61 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 		// add_filter( "woocommerce_credit_card_form_fields",                                  [ $this, "filter_cc_fields"                                  ], 10, 2 );
 		// add_filter( "woocommerce_can_subscription_be_updated_to_new-payment-method",        [ $this, "can_subscription_be_updated_to_new_payment_method" ], 20, 2 );
 		// add_filter( "woocommerce_subscriptions_update_payment_via_pay_shortcode",           [ $this, "can_update_all_subscriptions"                      ], 20, 3 );
+	}
+
+	public function checkout_scripts()
+	{
+		$load_scripts = false;
+
+		if ( is_checkout() )         $load_scripts = true;
+		if ( $this->is_available() ) $load_scripts = true;
+		if ( false === $load_scripts ) return;
+
+		$suffix       = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
+
+		$css_path     = "assets/css/frontend/style{$suffix}.css";
+		$css_ver      = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $css_path ) );
+		wp_enqueue_style( "{$this->id}_checkout",  plugins_url( $css_path, Triibo_Payments::FILE ), false, $css_ver, "all" );
+
+		$js_path      = "assets/js/frontend/script{$suffix}.js";
+		$js_ver       = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $js_path  ) );
+		wp_enqueue_script( "{$this->id}_checkout", plugins_url( $js_path,  Triibo_Payments::FILE ), [ "json2", "jquery", "woocommerce-extra-checkout-fields-for-brazil-front", "jquery-mask" ], $js_ver, true );
+
+		// $user         = wp_get_current_user();
+
+		// $this->api->validate_token( $user->ID );
+
+		// $url = ( $this->node->env() )
+		// 		? "https://dev-marketplace.triibo.com.br/wp-json/" . $this->id . "/v1"
+		// 		: "https://marketplace.triibo.com.br/wp-json/" . $this->id . "/v1";
+
+		// wp_localize_script(
+		// 	$this->id . "_checkout",
+		// 	"wc_" . $this->id . "_params",
+		// 	[
+		// 		"user_id"  => $user->ID,
+		// 		"base_url" => $url,
+		// 		"messages" => [
+		// 			"session_error"      => __( "Ocorreu um error. Por favor, atualize a página.",                       $this->id ),
+
+		// 			"unsupported_card"   => __( "Essa bandeira não é suportada pelo Triibo Recorrente atualmente.",      $this->id ),
+
+		// 			"invalid_card"       => __( "O número do cartão de crédito é inválido.",                             $this->id ),
+		// 			"invalid_expiry"     => __( "A data de expiração é inválida, por favor, utilize o formato MM / AA.", $this->id ),
+		// 			"invalid_cvv"        => __( "O código do cartão é inválido.",                                        $this->id ),
+
+		// 			"invalid_holder"     => __( "Informe o nome do titular do cartão.",                                  $this->id ),
+		// 			"invalid_h_cpf"      => __( "Informe o CPF do titular do cartão.",                                   $this->id ),
+
+		// 			"expired_date"       => __( "Por favor, verifique a data de expiração e utilize o formato MM / AA.", $this->id ),
+
+		// 			"empty_installments" => __( "Selecione o número de parcelas.",                                       $this->id ),
+		// 			"interest_free"      => __( "sem juros",                                                             $this->id ),
+
+		// 			"general_error"      => __( "Não foi possível processar os dados do seu cartão de crédito, por favor, tente novamente ou entre em contato para receber ajuda.", $this->id ),
+		// 		]
+		// 	]
+		// );
 	}
 
 }
