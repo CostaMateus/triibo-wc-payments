@@ -204,7 +204,7 @@ class Triibo_Payments
 	}
 
 	/**
-	 * Add button to Triibo menu
+	 * Add text to ecosystem description
 	 *
 	 * @since 	1.0.0
 	 * @return 	void
@@ -219,7 +219,7 @@ class Triibo_Payments
 	}
 
 	/**
-	 * Add info dependency
+	 * Add text to description which api it depends on
 	 *
 	 * @since 	1.0.0
 	 * @return 	void
