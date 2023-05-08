@@ -43,7 +43,7 @@ class Triibo_Payments_Api
 	 * @since 	1.0.0
      * @param   string  $uid
      * @param   integer $user_id
-	 * @return 	void
+	 * @return 	string
 	 */
 	public function generate_token( $uid, $user_id )
 	{
@@ -58,6 +58,8 @@ class Triibo_Payments_Api
 
 				update_user_meta( $user_id, "_triibo_auth_token",    $token    );
 				update_user_meta( $user_id, "_triibo_auth_validity", $validity );
+
+				return $token;
 			}
 			else
 			{
@@ -67,7 +69,7 @@ class Triibo_Payments_Api
 					"error"   => $resp[ "error"   ]
 				] ) );
 
-				$this->generate_token( $uid, $user_id );
+				return $this->generate_token( $uid, $user_id );
 			}
 		}
 	}
@@ -90,7 +92,7 @@ class Triibo_Payments_Api
 		if ( !$token )
 		{
 			$this->log( "INFO - validate_token : user without token $user_id" );
-			$this->generate_token( $uid, $user_id );
+			return $this->generate_token( $uid, $user_id );
 		}
 		else
 		{
@@ -101,13 +103,11 @@ class Triibo_Payments_Api
 			if ( $diff->d > 0 || $diff->h > 10 )
 			{
 				$this->log( "INFO - validate_token : experied token $user_id" );
-				$this->generate_token( $uid, $user_id );
+				return $this->generate_token( $uid, $user_id );
 			}
+
+			return $token;
 		}
-
-		$token = get_user_meta( $user_id, "_triibo_auth_token", true );
-
-		return $token;
 	}
 
 	/**
