@@ -8,7 +8,7 @@
  */
 defined( "ABSPATH" ) || exit;
 
-class Triibo_Payment_Billet extends WC_Payment_Gateway_CC
+class Triibo_Payment_Billet extends WC_Payment_Gateway
 {
 	/**
 	 * Instance of this class.
