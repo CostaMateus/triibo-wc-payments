@@ -247,14 +247,9 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 */
 	public function init_actions_filters()
 	{
-		add_action( "wp_enqueue_scripts",                                                   [ $this, "checkout_scripts"                                  ]        );
-		// add_action( "woocommerce_scheduled_subscription_payment_"              . $this->id, [ $this, "scheduled_subscription_payment"                    ], 10, 2 );
-		// add_action( "woocommerce_update_options_payment_gateways_"             . $this->id, [ $this, "process_admin_options"                             ]        );
-		// add_action( "woocommerce_subscription_failing_payment_method_updated_" . $this->id, [ $this, "update_failing_payment_method"                     ], 10, 2 );
-
-		// add_filter( "woocommerce_credit_card_form_fields",                                  [ $this, "filter_cc_fields"                                  ], 10, 2 );
-		// add_filter( "woocommerce_can_subscription_be_updated_to_new-payment-method",        [ $this, "can_subscription_be_updated_to_new_payment_method" ], 20, 2 );
-		// add_filter( "woocommerce_subscriptions_update_payment_via_pay_shortcode",           [ $this, "can_update_all_subscriptions"                      ], 20, 3 );
+		add_action( "wp_enqueue_scripts",                                       [ $this, "checkout_scripts"      ] );
+		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
+		add_filter( "woocommerce_credit_card_form_start",                       [ $this, "form_fields"           ] );
 	}
 
 	public function checkout_scripts()
@@ -269,47 +264,66 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 
 		$css_path     = "assets/css/frontend/style{$suffix}.css";
 		$css_ver      = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $css_path ) );
-		wp_enqueue_style( "{$this->id}_checkout",  plugins_url( $css_path, Triibo_Payments::FILE ), false, $css_ver, "all" );
+		wp_enqueue_style(  "{$this->id}_checkout", plugins_url( $css_path, Triibo_Payments::FILE ), false, $css_ver, "all" );
 
 		$js_path      = "assets/js/frontend/script{$suffix}.js";
 		$js_ver       = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $js_path  ) );
 		wp_enqueue_script( "{$this->id}_checkout", plugins_url( $js_path,  Triibo_Payments::FILE ), [ "json2", "jquery", "woocommerce-extra-checkout-fields-for-brazil-front", "jquery-mask" ], $js_ver, true );
 
-		// $user         = wp_get_current_user();
+		$user         = wp_get_current_user();
+		$token        = $this->api->validate_token( $user->ID );
 
-		// $this->api->validate_token( $user->ID );
+		$url          = get_rest_url( null, "triibo-payments/v1/cards/brands" );
 
-		// $url = ( $this->node->env() )
-		// 		? "https://dev-marketplace.triibo.com.br/wp-json/" . $this->id . "/v1"
-		// 		: "https://marketplace.triibo.com.br/wp-json/" . $this->id . "/v1";
+		wp_localize_script(
+			"{$this->id}_checkout",
+			"{$this->id}_params",
+			[
+				"user_id"       => $user->ID,
+				"base_url"      => $url,
+				"invalid_token" => $token ? false : true,
+				"card_messages" => [
+					"unsupported_card"   => __( "Essa bandeira não é suportada pelo Triibo Cartão de Crédito atualmente.", $this->id ),
+					"session_error"      => __( "Ocorreu um error. Por favor, atualize a página.",                         $this->id ),
+					"invalid_card"       => __( "O número do cartão de crédito é inválido.",                               $this->id ),
+					"invalid_expiry"     => __( "A data de expiração é inválida, por favor, utilize o formato MM / AA.",   $this->id ),
+					"invalid_cvv"        => __( "O código do cartão é inválido.",                                          $this->id ),
+					"invalid_holder"     => __( "Informe o nome do titular do cartão.",                                    $this->id ),
+					"invalid_holder_cpf" => __( "Informe o CPF do titular do cartão.",                                     $this->id ),
+					"expired_date"       => __( "Por favor, verifique a data de expiração e utilize o formato MM / AA.",   $this->id ),
+					"empty_installments" => __( "Selecione o número de parcelas.",                                         $this->id ),
+					"interest_free"      => __( "sem juros",                                                               $this->id ),
+					"general_error"      => __( "Não foi possível processar os dados do seu cartão de crédito, por favor, tente novamente ou entre em contato para receber ajuda.", $this->id ),
+				]
+			]
+		);
+	}
 
-		// wp_localize_script(
-		// 	$this->id . "_checkout",
-		// 	"wc_" . $this->id . "_params",
-		// 	[
-		// 		"user_id"  => $user->ID,
-		// 		"base_url" => $url,
-		// 		"messages" => [
-		// 			"session_error"      => __( "Ocorreu um error. Por favor, atualize a página.",                       $this->id ),
+	/**
+	 * Checkout form fields
+	 *
+	 * @since 	1.0.0
+	 * @return 	void
+	 */
+	function form_fields( $id )
+	{
+		if ( $id == $this->id )
+		{
+			$id = esc_attr( $this->id );
 
-		// 			"unsupported_card"   => __( "Essa bandeira não é suportada pelo Triibo Recorrente atualmente.",      $this->id ),
-
-		// 			"invalid_card"       => __( "O número do cartão de crédito é inválido.",                             $this->id ),
-		// 			"invalid_expiry"     => __( "A data de expiração é inválida, por favor, utilize o formato MM / AA.", $this->id ),
-		// 			"invalid_cvv"        => __( "O código do cartão é inválido.",                                        $this->id ),
-
-		// 			"invalid_holder"     => __( "Informe o nome do titular do cartão.",                                  $this->id ),
-		// 			"invalid_h_cpf"      => __( "Informe o CPF do titular do cartão.",                                   $this->id ),
-
-		// 			"expired_date"       => __( "Por favor, verifique a data de expiração e utilize o formato MM / AA.", $this->id ),
-
-		// 			"empty_installments" => __( "Selecione o número de parcelas.",                                       $this->id ),
-		// 			"interest_free"      => __( "sem juros",                                                             $this->id ),
-
-		// 			"general_error"      => __( "Não foi possível processar os dados do seu cartão de crédito, por favor, tente novamente ou entre em contato para receber ajuda.", $this->id ),
-		// 		]
-		// 	]
-		// );
+			echo "<p class='form-row form-row-wide' >
+				<label for='{$id}-card-holder-name' >" . esc_html__( "Nome do titular", $this->id ) . "&nbsp;<span class='required' >*</span></label>
+				<input id='{$id}-card-holder-name' class='input-text' type='text' placeholder='" . esc_attr__( "Informe o nome do titular", $this->id ) . "' " . $this->field_name( "card-holder-name" ) . " />
+			</p>
+			<p class='form-row form-row-wide' >
+				<label for='{$id}-card-holder-cpf' >" . esc_html__( "CPF do titular", $this->id ) . "&nbsp;<span class='required'>*</span></label>
+				<input id='{$id}-card-holder-cpf' class='input-text' type='tel' placeholder='" . esc_attr__( "000.000.000-00", $this->id ) . "' " . $this->field_name( "card-holder-cpf" ) . "/>
+			</p>
+			<p class='form-row form-row-wide' >
+				<label for='{$id}-card-holder-phone' >" . esc_html__( "Celular do titular", $this->id ) . "&nbsp;<span class='required'>*</span></label>
+				<input id='{$id}-card-holder-phone' class='input-text' type='tel' placeholder='" . esc_attr__( "(00) 00000-0000", $this->id ) . "' " . $this->field_name( "card-holder-phone" ) . "/>
+			</p>";
+		}
 	}
 
 }
