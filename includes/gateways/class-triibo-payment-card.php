@@ -27,6 +27,22 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	protected $service         = null;
 
 	/**
+	 * Type of payment in installments, in cash or in installments.
+	 *
+	 * @since 	1.0.0
+	 * @var 	string
+	 */
+	protected $installment_type = null;
+
+	/**
+	 * Number of installments.
+	 *
+	 * @since 	1.0.0
+	 * @var 	integer
+	 */
+	protected $installments    = null;
+
+	/**
 	 * Instance of Api Node
 	 *
 	 * @since 	1.0.0
@@ -86,10 +102,12 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
         $this->init_settings();
 
         // Define user set variables.
-        $this->title              = $this->get_option( "title"       );
-        $this->description        = $this->get_option( "description" );
-        $this->service            = $this->get_option( "service"     );
-        $this->debug              = $this->get_option( "debug"       );
+        $this->title              = $this->get_option( "title"            );
+        $this->description        = $this->get_option( "description"      );
+        $this->service            = $this->get_option( "service"          );
+        $this->installment_type   = $this->get_option( "installment_type" );
+        $this->installments       = $this->get_option( "installments"     );
+        $this->debug              = $this->get_option( "debug"            );
 
         // Active logs.
         if ( $this->debug == "yes" ) $this->log = ( function_exists( "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
@@ -219,39 +237,72 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 		$this->form_fields = [
 
 			// ativar / desativar meio de pagamento
-			"enabled"         => [
+			"enabled"           => [
 				"type"        => "checkbox",
 				"title"       => __( "Ativar / Desativar",                                        $this->id ),
 				"label"       => __( "Ativar Triibo Cartão de Crédito",                           $this->id ),
 				"default"     => "no",
 			],
 
-			"title"           => [
+			"title"             => [
 				"type"        => "text",
 				"title"       => __( "Título",                                                    $this->id ),
 				"description" => __( "Controla o título que o usuário vê durante o checkout.",    $this->id ),
 				"default"     => __( "Triibo Cartão de Crédito",                                  $this->id ),
 			],
-			"description"     => [
+			"description"       => [
 				"type"        => "textarea",
 				"title"       => __( "Descrição",                                                 $this->id ),
 				"description" => __( "Controla a descrição que o usuário vê durante o checkout.", $this->id ),
 				"default"     => __( "Pague com a Triibo Cartão",                                 $this->id ),
 			],
 
-			"service"         => [
+			"service"           => [
 				"type"        => "select",
 				"title"       => __( "Serviço de pagamento",                                      $this->id ),
 				"description" => __( "Escolha qual será o serviço de pagamento padrão.",          $this->id ),
 				"default"     => "asaas",
 				"class"       => "wc-enhanced-select",
 				"options"     => [
-					"asaas" => __( "Asaas", $this->id ),
-					"cielo" => __( "Cielo", $this->id ),
+					"asaas" => __( "Asaas",                                                       $this->id ),
+					"cielo" => __( "Cielo",                                                       $this->id ),
 				],
 			],
 
-			"debug"           => [
+			"installment_type"  => [
+				"type"        => "checkbox",
+				"title"       => __( "Opção de parcelamento",                                     $this->id ),
+				"label"       => __( "Ativar opção de parcelamento no checkout",                  $this->id ),
+				"description" => __( "Ao desativar essa opção, o cliente só terá a
+									  opção de pagamento à vista!",                               $this->id ),
+				"desc_tip"    => true,
+				"default"     => "yes",
+            ],
+			"installments"      => [
+				"type"        => "select",
+				"title"       => __( "Número de parcelas",                                        $this->id ),
+				"description" => __( "Selecione o número máximo de parcelas
+									  disponíveis para o cliente.",                               $this->id ),
+				"desc_tip"    => true,
+				"default"     => 1,
+				"class"       => "wc-enhanced-select",
+				"options"     => [
+					1  => __(  "1", $this->id ),
+					2  => __(  "2", $this->id ),
+					3  => __(  "3", $this->id ),
+					4  => __(  "4", $this->id ),
+					5  => __(  "5", $this->id ),
+					6  => __(  "6", $this->id ),
+					7  => __(  "7", $this->id ),
+					8  => __(  "8", $this->id ),
+					9  => __(  "9", $this->id ),
+					10 => __( "10", $this->id ),
+					11 => __( "11", $this->id ),
+					12 => __( "12", $this->id ),
+				],
+            ],
+
+			"debug"             => [
 				"type"        => "checkbox",
 				"title"       => __( "Debug Log",                                                 $this->id ),
 				"label"       => __( "Ativar logger",                                             $this->id ),
@@ -259,7 +310,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 				"default"     => "yes",
 			],
 
-			"configs" => [
+			"configs"           => [
 				"type"        => "title",
 				"title"       => __( "Chaves de API",                                             $this->id ),
 				"description" => sprintf( __( "Acessar configurações globais %s.", $this->id ), $this->get_global_config() ),
@@ -277,9 +328,31 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	{
 		add_action( "wp_enqueue_scripts",                                       [ $this, "checkout_scripts"      ] );
 		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
-		add_filter( "woocommerce_credit_card_form_start",                       [ $this, "form_fields"           ] );
+		add_filter( "woocommerce_credit_card_form_start",                       [ $this, "form_fields_start"     ] );
+		add_filter( "woocommerce_credit_card_form_end",                         [ $this, "form_fields_end"       ] );
 	}
 
+	/**
+	 * Admin page.
+	 *
+	 * @since 	1.0.0
+	 * @return 	void
+	 */
+	public function admin_options()
+	{
+		$suffix  = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
+		$js_path = "assets/js/admin/script{$suffix}.js";
+		$js_ver  = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $js_path  ) );
+		wp_enqueue_script( "{$this->id}_admin", plugins_url( $js_path, Triibo_Payments::FILE ), [ "json2", "jquery" ], $js_ver, true );
+
+		require_once ( dirname( Triibo_Payments::FILE ) . "/templates/admin/wc-settings.php" );
+	}
+
+	/**
+	 * Checkout scripts.
+	 *
+	 * @return void
+	 */
 	public function checkout_scripts()
 	{
 		$load_scripts = false;
@@ -307,33 +380,44 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 			"{$this->id}_checkout",
 			"{$this->id}_params",
 			[
+				"id"            => $this->id,
 				"user_id"       => $user->ID,
 				"base_url"      => $url,
 				"invalid_token" => $token ? false : true,
+				"installment"   => [
+					"type"  => $this->installment_type == "yes" ? "parcelado" : "avista",
+					"count" => $this->installments,
+					"total" => $this->get_order_total(),
+				],
+				"messages"      => [
+					"session_error"        => __( "Ocorreu um error. Por favor, atualize a página.",                         $this->id ),
+					"invalid_token"        => __( "Por favor, faça login pela Triibo para finalizar a compra.",              $this->id ),
+				],
 				"card_messages" => [
-					"unsupported_card"   => __( "Essa bandeira não é suportada pelo Triibo Cartão de Crédito atualmente.", $this->id ),
-					"session_error"      => __( "Ocorreu um error. Por favor, atualize a página.",                         $this->id ),
-					"invalid_card"       => __( "O número do cartão de crédito é inválido.",                               $this->id ),
-					"invalid_expiry"     => __( "A data de expiração é inválida, por favor, utilize o formato MM / AA.",   $this->id ),
-					"invalid_cvv"        => __( "O código do cartão é inválido.",                                          $this->id ),
-					"invalid_holder"     => __( "Informe o nome do titular do cartão.",                                    $this->id ),
-					"invalid_holder_cpf" => __( "Informe o CPF do titular do cartão.",                                     $this->id ),
-					"expired_date"       => __( "Por favor, verifique a data de expiração e utilize o formato MM / AA.",   $this->id ),
-					"empty_installments" => __( "Selecione o número de parcelas.",                                         $this->id ),
-					"interest_free"      => __( "sem juros",                                                               $this->id ),
-					"general_error"      => __( "Não foi possível processar os dados do seu cartão de crédito, por favor, tente novamente ou entre em contato para receber ajuda.", $this->id ),
+					"invalid_holder_name"  => __( "Informe o nome do titular do cartão.",                                    $this->id ),
+					"invalid_holder_cpf"   => __( "Informe o CPF do titular do cartão.",                                     $this->id ),
+					"invalid_holder_phone" => __( "Informe o celular do titular do cartão.",                                 $this->id ),
+					"invalid_card"         => __( "O número do cartão de crédito é inválido.",                               $this->id ),
+					"invalid_expiry"       => __( "A data de expiração é inválida, por favor, utilize o formato MM / AA.",   $this->id ),
+					"invalid_cvc"          => __( "O código do cartão é inválido.",                                          $this->id ),
+					"expired_date"         => __( "Por favor, verifique a data de expiração e utilize o formato MM / AA.",   $this->id ),
+					"invalid_brand"        => __( "A bandeira do cartão é inválida.",                                        $this->id ),
+					"unsupported_brand"    => __( "Essa bandeira não é suportada pelo Triibo Cartão de Crédito atualmente.", $this->id ),
+					"empty_installments"   => __( "Selecione o número de parcelas.",                                         $this->id ),
+					"interest_free"        => __( "sem juros",                                                               $this->id ),
+					"general_error"        => __( "Não foi possível processar os dados do seu cartão de crédito, por favor, tente novamente ou entre em contato para receber ajuda.", $this->id ),
 				]
 			]
 		);
 	}
 
 	/**
-	 * Checkout form fields
+	 * Checkout form fields start.
 	 *
 	 * @since 	1.0.0
 	 * @return 	void
 	 */
-	public function form_fields( $id )
+	public function form_fields_start( $id )
 	{
 		if ( $id == $this->id )
 		{
@@ -352,6 +436,26 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 				<input id='{$id}-card-holder-phone' class='input-text' type='tel' placeholder='" . esc_attr__( "(00) 00000-0000", $this->id ) . "' " . $this->field_name( "card-holder-phone" ) . "/>
 			</p>";
 		}
+	}
+
+	/**
+	 * Checkout form fields start.
+	 *
+	 * @param [type] $id
+	 * @return void
+	 */
+	public function form_fields_end( $id )
+	{
+		if ( $id == $this->id )
+		{
+			$id = esc_attr( $this->id );
+
+			echo "<p class='form-row form-row-wide' >
+				<label for='{$id}-card-installment' >" . esc_html__( "Parcelas", $this->id ) . "&nbsp;<span class='required' >*</span></label>
+				<select id='{$id}-card-installment' class='input-text' style='width:100%; color:#999' " . $this->field_name( "card-installment" ) . " ></select>
+			</p>";
+		}
+
 	}
 
 	/**
@@ -376,12 +480,78 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 		}
 		else
 		{
-			$description = ( $this->node->env() ) ? $this->get_description() . __( " - HOMOL ativado.", $this->id ) : $this->get_description();
+			$description = ( $this->node->env() ) ? $this->get_description() . __( " - SANDBOX ativado.", $this->id ) : $this->get_description();
 
 			if ( $description ) echo wpautop( wptexturize( trim( $description ) ) );
 
 			parent::payment_fields();
 		}
+	}
+
+	/**
+	 * Process the payment
+	 * Function called by WooCommerce to process the payment
+	 *
+	 * @since 	1.0.0
+	 * @param  	int $order_id
+	 * @return 	array
+	 */
+	public function process_payment( $order_id )
+	{
+        $user      = wp_get_current_user();
+		$token     = $this->api->validate_token( $user->ID );
+		$number    = WC()->checkout()->get_value( $this->id . "-card_number" );
+
+		$msg       = "<b>" . $this->title . "</b>:";
+
+		wc_add_notice( "{$msg} Processamento interrompido!", "error" );
+		return [
+			"result"   => "fail",
+			"redirect" => ""
+		];
+
+		// // $brand     = $response[ "data" ][ "brandInfo" ][ "brand" ];
+		// $triibo_id = get_user_meta( $user->ID, "triiboId_phone", true );
+		// $order     = wc_get_order( $order_id );
+
+		// $cardInfo  = [
+		// 	"token"       => $token,
+
+		// 	"holder"      => WC()->checkout()->get_value( $this->id . "-holder"    ),
+		// 	"cpf"         => WC()->checkout()->get_value( $this->id . "-h_cpf"     ),
+		// 	"phone"       => $triibo_id,
+
+		// 	"card_number" => $number,
+		// 	"cvc"         => WC()->checkout()->get_value( $this->id . "-cvc"       ),
+		// 	"month"       => WC()->checkout()->get_value( $this->id . "-exp_month" ),
+		// 	"year"        => WC()->checkout()->get_value( $this->id . "-exp_year"  ),
+		// 	// "brand"       => $brand,
+		// ];
+
+		// $response  = $this->api->do_payment( "card", $order, $cardInfo );
+
+		// if ( !$response[ "success" ] )
+		// {
+		// 	wc_add_notice( "{$msg} " . $response[ "error" ], "error" );
+
+		// 	return [
+		// 		"result"   => "fail",
+		// 		"redirect" => ""
+		// 	];
+		// }
+
+		// if ( !isset( $response[ "payment_change" ] ) || !$response[ "payment_change" ] )
+		// {
+		// 	$this->finalize_order( $order, $response[ "data" ] );
+
+		// 	// Remove cart.
+		// 	WC()->cart->empty_cart();
+		// }
+
+		// return [
+		// 	"result"   => "success",
+		// 	"redirect" => $this->get_return_url( $order ),
+		// ];
 	}
 
 }
