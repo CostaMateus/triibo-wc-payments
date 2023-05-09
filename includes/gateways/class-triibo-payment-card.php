@@ -181,6 +181,34 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	}
 
 	/**
+	 * Returns a bool that indicates if currency is amongst the supported ones.
+	 *
+	 * @since 	1.0.0
+	 * @return 	bool
+	 */
+	public function using_supported_currency()
+	{
+		return "BRL" === get_woocommerce_currency();
+	}
+
+	/**
+	 * Returns a value indicating the the Gateway is available or not.
+	 * It's called automatically by WooCommerce before allowing
+	 * customers to use the gateway for payment.
+	 *
+	 * @return bool
+	 */
+	public function is_available()
+	{
+		$available = $this->get_option( "enabled" ) === "yes" &&
+					 $this->node->status() && $this->using_supported_currency();
+
+		if ( !class_exists( "Extra_Checkout_Fields_For_Brazil" ) ) $available = false;
+
+		return $available;
+	}
+
+	/**
 	 * Initialise Gateway Settings Form Fields.
 	 *
 	 * @since 	1.0.0
