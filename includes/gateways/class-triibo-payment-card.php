@@ -305,7 +305,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @return 	void
 	 */
-	function form_fields( $id )
+	public function form_fields( $id )
 	{
 		if ( $id == $this->id )
 		{
@@ -323,6 +323,36 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 				<label for='{$id}-card-holder-phone' >" . esc_html__( "Celular do titular", $this->id ) . "&nbsp;<span class='required'>*</span></label>
 				<input id='{$id}-card-holder-phone' class='input-text' type='tel' placeholder='" . esc_attr__( "(00) 00000-0000", $this->id ) . "' " . $this->field_name( "card-holder-phone" ) . "/>
 			</p>";
+		}
+	}
+
+	/**
+	 * Payment Fields Hook.
+	 *
+	 * @since 	1.0.0
+	 * @return 	void
+	 */
+	public function payment_fields()
+	{
+		if (
+			( class_exists( "WC_Subscriptions_Cart"                   ) && WC_Subscriptions_Cart::cart_contains_subscription() )
+			||
+			( class_exists( "WC_Subscriptions_Change_Payment_Gateway" ) && WC_Subscriptions_Change_Payment_Gateway::$is_request_to_change_payment )
+			||
+			( function_exists( "wcs_cart_contains_resubscribe" ) && wcs_cart_contains_resubscribe() )
+			||
+			( function_exists( "wcs_cart_contains_renewal"     ) && wcs_cart_contains_renewal() )
+		)
+		{
+			$this->availability = false;
+		}
+		else
+		{
+			$description = ( $this->node->env() ) ? $this->get_description() . __( " - HOMOL ativado.", $this->id ) : $this->get_description();
+
+			if ( $description ) echo wpautop( wptexturize( trim( $description ) ) );
+
+			parent::payment_fields();
 		}
 	}
 
