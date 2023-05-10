@@ -80,13 +80,16 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 	 */
 	public function get_brand( $request )
 	{
-		$tpc = Triibo_Payment_Card::get_instance();
-		$bin = $request->get_param( "bin" );
+		$tpc     = Triibo_Payment_Card::get_instance();
+		$service = $tpc->get_service();
+
+		$bin     = $request->get_param( "bin" );
+		$user_id = $request->get_param( "user_id" );
 
 		// ASAAS
-		if ( $tpc->get_service() == "asaas" )
+		if ( $service == "asaas" )
 		{
-			$bin  = str_replace( " ", "", $bin );
+			$bin  = str_replace( "-", "", $bin );
 
 			$arr  = [
 				"Visa"       => "/^4\d{12}(\d{3})?$/",
@@ -120,27 +123,31 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 				}
 			}
 
+			$tpc->log( json_encode( [ $user_id, $bin, $data ] ) );
+
 			return json_encode( $data );
 		}
 
 		// CIELO
-		if ( $tpc->get_service() == "cielo" )
+		if ( $service == "cielo" )
 		{
-			$bin      = str_replace( " ", "-", $bin );
 			$api      = $tpc->get_api();
-			$user     = wp_get_current_user();
-			$token    = $api->validate_token( $user->ID );
+			$node     = $tpc->get_node();
+			$token    = $api->validate_token( $user_id );
 
 			$params   = [
 				"payload" => [
-					"gateway"    => $tpc->get_service(),
+					"gateway"    => $service,
 					"cardNumber" => $bin,
 				]
 			];
 
-			$response = $tpc->node->brand( $token, $params );
+			$response = $node->brand( $token, $params );
 
-			return json_encode( $response );
+			if ( !$response[ "success" ] )
+				$tpc->log( json_encode( [ $user_id, $params, $response ] ) );
+
+			return json_encode( $response[ "data" ] );
 		}
 	}
 
