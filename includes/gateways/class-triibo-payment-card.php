@@ -141,6 +141,17 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	}
 
 	/**
+	 * Get node
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_node()
+	{
+		return $this->node;
+	}
+
+	/**
 	 * Get api
 	 *
 	 * @since 	1.0.0
@@ -686,7 +697,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @param 	boolean $is_error
 	 * @return 	void
 	 */
-	private function log( $message, $is_error = false )
+	public function log( $message, $is_error = false )
 	{
 		if ( $this->debug == "yes" )
 		{
