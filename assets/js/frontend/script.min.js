@@ -258,17 +258,17 @@
 
 		// Get the credit card brand.
 		$( "body" ).on( "focusout", "#triibo_payments_card-card-number", function() {
-			let bin = $( this ).val().replace( /[^\d]/g, '' );
+			let bin = $( this ).val().replace( /[^\d]/g, '-' );
 
 			if ( bin.length >= 14 && bin.length <= 20 )
 			{
                 $.ajax( {
-                    url  : `${tpc_data.rest_url}?bin=${bin}`,
+                    url  : `${tpc_data.rest_url}?bin=${bin}&user_id=${tpc_data.user_id}`,
                     type : "GET",
                     success: function( data ) {
 						let status = JSON.parse( data );
 
-                        if ( !status.success && !status.brandInfo.supported )
+                        if ( !status.success || !status.brandInfo.supported )
                         {
                             $( "body" ).trigger( "triibo_p_c_card_brand", "error" );
                             triibo_p_c_set_card_brand( "error" );
@@ -293,8 +293,8 @@
 		} );
 
 		// Clear errors.
-		$( "body" ).on( "focus", "#triibo_payments_card-card-number", "#triibo_payments_card-card-expiry", function() {
-			$( "#triibo_payments_card-cc-form .woocommerce-error" ).remove();
+		$( "body" ).on( "focus", "#triibo_payments_card-card-number", function() {
+			$( "#wc-triibo_payments_card-cc-form .woocommerce-error" ).remove();
 		} );
 
 		// Show brand error
