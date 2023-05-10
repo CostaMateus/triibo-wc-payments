@@ -80,7 +80,7 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 	 */
 	public function get_brand( $request )
 	{
-		$bin  = $request->get_param( "orderId"  );
+		$bin  = $request->get_param( "bin" );
 		$bin  = str_replace( " ", "", $bin );
 
 		$arr  = [
