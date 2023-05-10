@@ -374,7 +374,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 		$user         = wp_get_current_user();
 		$token        = $this->api->validate_token( $user->ID );
 
-		$url          = get_rest_url( null, "triibo-payments/v1/cards/brands" );
+		$url          = get_rest_url( null, "triibo-payments/v1/cards/brand" );
 
 		wp_localize_script(
 			"{$this->id}_checkout",
@@ -382,7 +382,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 			[
 				"id"            => $this->id,
 				"user_id"       => $user->ID,
-				"base_url"      => $url,
+				"rest_url"      => $url,
 				"invalid_token" => $token ? false : true,
 				"installment"   => [
 					"type"  => $this->installment_type == "yes" ? "parcelado" : "avista",
@@ -403,6 +403,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 					"expired_date"         => __( "Por favor, verifique a data de expiração e utilize o formato MM / AA.",   $this->id ),
 					"invalid_brand"        => __( "A bandeira do cartão é inválida.",                                        $this->id ),
 					"unsupported_brand"    => __( "Essa bandeira não é suportada pelo Triibo Cartão de Crédito atualmente.", $this->id ),
+					"unsupported_invalid"  => __( "Essa bandeira não é suportada ou o número do cartão é inválido.",         $this->id ),
 					"empty_installments"   => __( "Selecione o número de parcelas.",                                         $this->id ),
 					"interest_free"        => __( "sem juros",                                                               $this->id ),
 					"general_error"        => __( "Não foi possível processar os dados do seu cartão de crédito, por favor, tente novamente ou entre em contato para receber ajuda.", $this->id ),
