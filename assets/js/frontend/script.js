@@ -154,7 +154,7 @@
             let cvc         = $( "#triibo_payments_card-card-cvc",          form ).val();
             let installment = $( "#triibo_payments_card-card-installment",  form ).val();
 
-            let cc_form     = $( "#triibo_payments_card-cc-form", form );
+            let cc_form     = $( "#wc-triibo_payments_card-cc-form",        form );
             let brand       = cc_form.attr( "data-cc-brand" );
 
             let today       = new Date();
@@ -245,6 +245,9 @@
 			}
             else
             {
+                form.append( $( "<input name='triibo_payments_card-card-brand'       type='hidden' />" ).val( brand       ) );
+                form.append( $( "<input name='triibo_payments_card-card-installment' type='hidden' />" ).val( installment ) );
+
                 // submit the form.
                 tpc_submit = true;
                 form.submit();
@@ -264,8 +267,6 @@
                     type : "GET",
                     success: function( data ) {
 						let status = JSON.parse( data );
-
-						console.log( status );
 
                         if ( status.error && !status.brandInfo.supported )
                         {
