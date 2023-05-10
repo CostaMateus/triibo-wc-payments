@@ -202,7 +202,7 @@ class Triibo_Payments_Api
 	 * @param 	array $posted
 	 * @return 	array
 	 */
-	private function status_card( $posted )
+	public function status_card( $posted )
 	{
 		$number   = substr( $posted[ "card_number" ], -4 );
 		$response = $this->check_card_token( $posted[ "token" ], $number, $posted[ "brand" ] );
@@ -254,13 +254,54 @@ class Triibo_Payments_Api
 	}
 
 	/**
-	 * Processa pagamento
+	 * Process payment
 	 *
 	 * @since 	1.0.0
-	 * @param 	array $data
+	 * @param 	string 	$method
+	 * @param 	string 	$token
+	 * @param 	array 	$data
 	 * @return 	array
 	 */
-	private function do_payment( $token, $data )
+	public function do_payment( $method, $token, $data )
+	{
+		switch ( $method )
+		{
+			case "billet":
+				return $this->do_payment_billet( $token, $data );
+			break;
+
+			case "card":
+				return $this->do_payment_card( $token, $data );
+			break;
+
+			case "pix":
+				return $this->do_payment_pix( $token, $data );
+			break;
+		}
+	}
+
+	/**
+	 * Undocumented function
+	 *
+	 * @since 	1.0.0
+	 * @param 	string 	$token
+	 * @param 	array 	$data
+	 * @return 	array
+	 */
+	private function do_payment_billet()
+	{
+		return [];
+	}
+
+	/**
+	 * Undocumented function
+	 *
+	 * @since 	1.0.0
+	 * @param 	string 	$token
+	 * @param 	array 	$data
+	 * @return 	array
+	 */
+	private function do_payment_card( $token, $data )
 	{
 		$descrip  = $this->treatDescription( $data[ "description" ] );
 
@@ -287,6 +328,19 @@ class Triibo_Payments_Api
 		$this->log( "INFO - do_payment: " . json_encode( [ $params, $response ] ) );
 
 		return $response;
+	}
+
+	/**
+	 * Undocumented function
+	 *
+	 * @since 	1.0.0
+	 * @param 	string 	$token
+	 * @param 	array 	$data
+	 * @return 	array
+	 */
+	private function do_payment_pix()
+	{
+		return [];
 	}
 
 	/**
@@ -343,13 +397,3 @@ class Triibo_Payments_Api
 		}
 	}
 }
-
-// <!-- if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-// // check ip from share internet
-// $ip = $_SERVER['HTTP_CLIENT_IP'];
-// } elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-// // to check ip is pass from proxy
-// $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-// } else {
-// $ip = $_SERVER['REMOTE_ADDR'];
-// } -->
