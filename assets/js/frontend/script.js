@@ -75,8 +75,11 @@
 		function triibo_p_c_get_price_text( i, total )
 		{
 			let price = parseFloat( total / i, 10 ).toFixed( 2 ).replace( '.', ',' ).toString();
+			let text  = `${i}x de R$ ${price}`;
 
-			return `${i}x de R$ ${price} sem juros`;
+			if ( i > 1 ) text += " sem juros";
+
+			return text;
 		}
 
 		/**
@@ -114,6 +117,11 @@
 			instalmments.append( html );
 		}
 
+		/**
+		 * Change select css
+		 *
+		 * @param {int} value
+		 */
 		function triibo_p_c_options_css( value )
 		{
 			if ( value != 0 ) $( "#triibo_payments_card-card-installment" ).css( "color", "#000" );
@@ -245,9 +253,54 @@
 			return false;
         }
 
+		// Get the credit card brand.
+		$( "body" ).on( "focusout", "#triibo_payments_card-card-number", function() {
+			let bin = $( this ).val().replace( /[^\d]/g, '' );
 
+			if ( bin.length >= 14 && bin.length <= 20 )
+			{
+                $.ajax( {
+                    url  : `${tpc_data.rest_url}?bin=${bin}`,
+                    type : "GET",
+                    success: function( data ) {
+						let status = JSON.parse( data );
 
+						console.log( status );
 
+                        if ( status.error && !status.brandInfo.supported )
+                        {
+                            $( "body" ).trigger( "triibo_p_c_card_brand", "error" );
+                            triibo_p_c_set_card_brand( "error" );
+						}
+						else if ( status.brandInfo.supported )
+						{
+							$( "body" ).trigger( "triibo_p_c_card_brand", status.brandInfo.brand );
+							triibo_p_c_set_card_brand( status.brandInfo.brand );
+						}
+                    },
+                    error: function( err ) {
+                        // console.log( err );
+                        $( "body" ).trigger( "triibo_p_c_card_brand", "error" );
+                        triibo_p_c_set_card_brand( "error" );
+                    }
+                } );
+			}
+		} );
+		$( "body" ).on( "updated_checkout", function() {
+			let field = $( "body #triibo_payments_card-card-number" );
+			if ( field.length > 0 ) field.focusout();
+		} );
+
+		// Clear errors.
+		$( "body" ).on( "focus", "#triibo_payments_card-card-number, #triibo_payments_card-card-expiry", function() {
+			$( "#triibo_payments_card-cc-form .woocommerce-error" ).remove();
+		} );
+
+		// Show brand error
+		$( "body" ).on( "triibo_p_c_card_brand", function( e, brand ) {
+            if ( brand === "unsupported" || brand === "error" )
+				triibo_p_c_add_error_message( tpc_data.card_messages.unsupported_invalid );
+		} );
 
         // Display the payment for and init the input masks.
         if ( typeof wc_checkout_params != "undefined" && wc_checkout_params.is_checkout === "1" )
