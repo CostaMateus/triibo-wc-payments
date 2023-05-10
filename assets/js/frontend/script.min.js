@@ -268,7 +268,7 @@
                     success: function( data ) {
 						let status = JSON.parse( data );
 
-                        if ( status.error && !status.brandInfo.supported )
+                        if ( !status.success && !status.brandInfo.supported )
                         {
                             $( "body" ).trigger( "triibo_p_c_card_brand", "error" );
                             triibo_p_c_set_card_brand( "error" );
