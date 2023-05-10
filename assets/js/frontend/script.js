@@ -293,7 +293,7 @@
 		} );
 
 		// Clear errors.
-		$( "body" ).on( "focus", "#triibo_payments_card-card-number, #triibo_payments_card-card-expiry", function() {
+		$( "body" ).on( "focus", "#triibo_payments_card-card-number", "#triibo_payments_card-card-expiry", function() {
 			$( "#triibo_payments_card-cc-form .woocommerce-error" ).remove();
 		} );
 
