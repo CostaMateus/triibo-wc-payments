@@ -396,11 +396,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 
 		$suffix       = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
 
-		$css_path     = "assets/css/frontend/style{$suffix}.css";
-		$css_ver      = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $css_path ) );
-		wp_enqueue_style(  "{$this->id}_checkout", plugins_url( $css_path, Triibo_Payments::FILE ), false, $css_ver, "all" );
+		// $css_path     = "assets/css/frontend/style{$suffix}.css";
+		// $css_ver      = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $css_path ) );
+		// wp_enqueue_style(  "{$this->id}_checkout", plugins_url( $css_path, Triibo_Payments::FILE ), false, $css_ver, "all" );
 
-		$js_path      = "assets/js/frontend/script{$suffix}.js";
+		$js_path      = "assets/js/frontend/card.script{$suffix}.js";
 		$js_ver       = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $js_path  ) );
 		wp_enqueue_script( "{$this->id}_checkout", plugins_url( $js_path,  Triibo_Payments::FILE ), [ "json2", "jquery", "woocommerce-extra-checkout-fields-for-brazil-front", "jquery-mask" ], $js_ver, true );
 
