@@ -80,44 +80,68 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 	 */
 	public function get_brand( $request )
 	{
-		$bin  = $request->get_param( "bin" );
-		$bin  = str_replace( " ", "", $bin );
+		$tpc = Triibo_Payment_Card::get_instance();
+		$bin = $request->get_param( "bin" );
 
-		$arr  = [
-			"Visa"       => "/^4\d{12}(\d{3})?$/",
-			"Mastercard" => "/^(5[1-5]\d{14}|2(22[1-9]\d{12}|2[3-9]\d{13}|[3-6]\d{14}|7[0-1]\d{13}|720\d{12})|6(0[0,3]\d{13}|3[7,9]\d{13}|7\d\d{13})|975230\d{10})$/",
-			"Amex"       => "/^3[47]\d{13}$/",
-			"Diners"     => "/^3(0[0-5]|[68]\d)\d{11}$/",
-			"Elo"        => "/^((((438935)|(431274)|(457393)|(504175)|(451416)|(627780)|(636297)|(636368))\d{0,10})|((506[6,7])|(4576)|(4011)|(509\d)|(650\d)|(6516[5-7])|(65500[0-2,4-9])|(6550[1-2,4-9])|(65503[1-9]))\d{0,12})$/",
-			"Discover"   => "/^6(?:011|5[0-9]{2})\d{12}$/",
-			"Hipercard"  => "/^(606282\d{10}(\d{3})?)|(3841\d{15})$/",
-        ];
-
-		$data = [
-			"error"     => true,
-			"code"      => 404,
-			"brandInfo" => [
-				"supported" => false,
-				"brand"     => null
-			],
-		];
-
-        foreach ( $arr as $key => $regex )
+		// ASAAS
+		if ( $tpc->get_service() == "asaas" )
 		{
-            if ( preg_match_all( $regex, $bin, $matches ) )
-			{
-				$data[ "error"     ] = false;
-				$data[ "code"      ] = 200;
-				$data[ "brandInfo" ] = [
-					"supported" => true,
-					"brand"     => $key
-				];
+			$bin  = str_replace( " ", "", $bin );
 
-				return json_encode( $data );
+			$arr  = [
+				"Visa"       => "/^4\d{12}(\d{3})?$/",
+				"Mastercard" => "/^(5[1-5]\d{14}|2(22[1-9]\d{12}|2[3-9]\d{13}|[3-6]\d{14}|7[0-1]\d{13}|720\d{12})|6(0[0,3]\d{13}|3[7,9]\d{13}|7\d\d{13})|975230\d{10})$/",
+				"Amex"       => "/^3[47]\d{13}$/",
+				"Diners"     => "/^3(0[0-5]|[68]\d)\d{11}$/",
+				"Elo"        => "/^((((438935)|(431274)|(457393)|(504175)|(451416)|(627780)|(636297)|(636368))\d{0,10})|((506[6,7])|(4576)|(4011)|(509\d)|(650\d)|(6516[5-7])|(65500[0-2,4-9])|(6550[1-2,4-9])|(65503[1-9]))\d{0,12})$/",
+				"Discover"   => "/^6(?:011|5[0-9]{2})\d{12}$/",
+				"Hipercard"  => "/^(606282\d{10}(\d{3})?)|(3841\d{15})$/",
+			];
+
+			$data = [
+				"success"   => false,
+				"brandInfo" => [
+					"supported" => false,
+					"brand"     => null
+				],
+			];
+
+			foreach ( $arr as $key => $regex )
+			{
+				if ( preg_match_all( $regex, $bin, $matches ) )
+				{
+					$data[ "success"   ] = true;
+					$data[ "brandInfo" ] = [
+						"supported" => true,
+						"brand"     => $key
+					];
+
+					return json_encode( $data );
+				}
 			}
+
+			return json_encode( $data );
 		}
 
-		return json_encode( $data );
+		// CIELO
+		if ( $tpc->get_service() == "cielo" )
+		{
+			$bin      = str_replace( " ", "-", $bin );
+			$api      = $tpc->get_api();
+			$user     = wp_get_current_user();
+			$token    = $api->validate_token( $user->ID );
+
+			$params   = [
+				"payload" => [
+					"gateway"    => $tpc->get_service(),
+					"cardNumber" => $bin,
+				]
+			];
+
+			$response = $tpc->node->brand( $token, $params );
+
+			return json_encode( $response );
+		}
 	}
 
 }
