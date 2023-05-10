@@ -185,7 +185,7 @@ class Triibo_Payments
 		add_submenu_page(
 			Triibo_Api_Services::get_name(),
 			"Triibo Payments",
-			"Triibo Payments",
+			"Payments",
 			"manage_options",
 			self::DOMAIN . "-settings",
 			[ $this, "display_admin_menu_settings" ]
@@ -211,7 +211,7 @@ class Triibo_Payments
 	 */
 	public function add_btn()
 	{
-        $url  = esc_url( admin_url( "admin.php?page=wc-settings&tab=checkout&section=" . self::DOMAIN ) );
+        $url  = esc_url( admin_url( "admin.php?page=wc-settings&tab=checkout" ) );
 		$text = __( "WC Configurações", self::DOMAIN );
 		$link = "<a href='{$url}' >{$text}</a>";
 
