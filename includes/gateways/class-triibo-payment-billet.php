@@ -94,9 +94,75 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
         if ( $this->debug == "yes" ) $this->log = ( function_exists( "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
 
         $this->node = new Triibo_Api_Node();
-        // $this->api = new Triibo_Payment_Api( $this, $this->node );
+        $this->api  = new Triibo_Payments_Api( $this, $this->node );
 
         $this->init_actions_filters();
+	}
+
+	/**
+	 * Get id
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_id()
+	{
+		return $this->id;
+	}
+
+	/**
+	 * Get service
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_service()
+	{
+		return $this->service;
+	}
+
+	/**
+	 * Get node
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_node()
+	{
+		return $this->node;
+	}
+
+	/**
+	 * Get api
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_api()
+	{
+		return $this->api;
+	}
+
+	/**
+	 * Get debug
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public function get_debug()
+	{
+		return $this->debug;
+	}
+
+	/**
+	 * Get log
+	 *
+	 * @since 	1.0.0
+	 * @return 	wc_get_logger|WC_Logger
+	 */
+	public function get_log()
+	{
+		return $this->log;
 	}
 
 	/**
@@ -144,6 +210,37 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 		$text   = __( "clicando aqui", $this->id );
 
 		return "<a href='{$url}' target='_blank' >{$text}</a>";
+	}
+
+	/**
+	 * Returns a bool that indicates if currency is amongst the supported ones.
+	 *
+	 * @since 	1.0.0
+	 * @return 	bool
+	 */
+	public function using_supported_currency()
+	{
+		return "BRL" === get_woocommerce_currency();
+	}
+
+	/**
+	 * Returns a value indicating the the Gateway is available or not.
+	 * It's called automatically by WooCommerce before allowing
+	 * customers to use the gateway for payment.
+	 *
+	 * @return bool
+	 */
+	public function is_available()
+	{
+		// TODO remover futuramente
+		return false;
+
+		$available = $this->get_option( "enabled" ) === "yes" &&
+					 $this->node->status() && $this->using_supported_currency();
+
+		if ( !class_exists( "Extra_Checkout_Fields_For_Brazil" ) ) $available = false;
+
+		return $available;
 	}
 
 	/**
@@ -196,7 +293,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 				"default"     => "yes",
 			],
 
-			"configs" => [
+			"configs"         => [
 				"type"        => "title",
 				"title"       => __( "Chaves de API",                                             $this->id ),
 				"description" => sprintf( __( "Acessar configurações globais %s.", $this->id ), $this->get_global_config() ),
@@ -212,15 +309,291 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 */
 	public function init_actions_filters()
 	{
-		// add_action( "wp_enqueue_scripts",                                                   [ $this, "checkout_scripts"                                  ]        );
-		// add_action( "woocommerce_scheduled_subscription_payment_"              . $this->id, [ $this, "scheduled_subscription_payment"                    ], 10, 2 );
-		// add_action( "woocommerce_update_options_payment_gateways_"             . $this->id, [ $this, "process_admin_options"                             ]        );
-		// add_action( "woocommerce_subscription_failing_payment_method_updated_" . $this->id, [ $this, "update_failing_payment_method"                     ], 10, 2 );
-
-		// add_filter( "woocommerce_credit_card_form_fields",                                  [ $this, "filter_cc_fields"                                  ], 10, 2 );
-		// add_filter( "woocommerce_can_subscription_be_updated_to_new-payment-method",        [ $this, "can_subscription_be_updated_to_new_payment_method" ], 20, 2 );
-		// add_filter( "woocommerce_subscriptions_update_payment_via_pay_shortcode",           [ $this, "can_update_all_subscriptions"                      ], 20, 3 );
+		add_action( "wp_enqueue_scripts",                                       [ $this, "checkout_scripts"      ] );
+		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
 	}
 
+	/**
+	 * Admin page.
+	 *
+	 * @since 	1.0.0
+	 * @return 	void
+	 */
+	public function admin_options()
+	{
+		$suffix  = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
+		$js_path = "assets/js/admin/script{$suffix}.js";
+		$js_ver  = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $js_path  ) );
+		wp_enqueue_script( "{$this->id}_admin", plugins_url( $js_path, Triibo_Payments::FILE ), [ "json2", "jquery" ], $js_ver, true );
+
+		require_once ( dirname( Triibo_Payments::FILE ) . "/templates/admin/wc-settings.php" );
+	}
+
+	/**
+	 * Checkout scripts.
+	 *
+	 * @return void
+	 */
+	public function checkout_scripts()
+	{
+		$load_scripts = false;
+
+		if ( is_checkout() )         $load_scripts = true;
+		if ( $this->is_available() ) $load_scripts = true;
+		if ( false === $load_scripts ) return;
+
+		$suffix       = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
+
+		// $css_path     = "assets/css/frontend/style{$suffix}.css";
+		// $css_ver      = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $css_path ) );
+		// wp_enqueue_style(  "{$this->id}_checkout", plugins_url( $css_path, Triibo_Payments::FILE ), false, $css_ver, "all" );
+
+		$js_path      = "assets/js/frontend/billet.script{$suffix}.js";
+		$js_ver       = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $js_path  ) );
+		wp_enqueue_script( "{$this->id}_checkout", plugins_url( $js_path,  Triibo_Payments::FILE ), [ "json2", "jquery", "woocommerce-extra-checkout-fields-for-brazil-front", "jquery-mask" ], $js_ver, true );
+
+		$user         = wp_get_current_user();
+		$token        = $this->api->validate_token( $user->ID );
+
+		$url          = get_rest_url( null, "triibo-payments/v1/cards/brand" );
+
+		wp_localize_script(
+			"{$this->id}_checkout",
+			"{$this->id}_params",
+			[
+				"id"            => $this->id,
+				"user_id"       => $user->ID,
+				"rest_url"      => $url,
+				"invalid_token" => $token ? false : true,
+				"messages"      => [
+					"session_error" => __( "Ocorreu um error. Por favor, atualize a página.",            $this->id ),
+					"invalid_token" => __( "Por favor, faça login pela Triibo para finalizar a compra.", $this->id ),
+				],
+			]
+		);
+	}
+
+	/**
+	 * Payment Fields Hook.
+	 *
+	 * @since 	1.0.0
+	 * @return 	void
+	 */
+	public function payment_fields()
+	{
+		if (
+			( class_exists( "WC_Subscriptions_Cart"                   ) && WC_Subscriptions_Cart::cart_contains_subscription() )
+			||
+			( class_exists( "WC_Subscriptions_Change_Payment_Gateway" ) && WC_Subscriptions_Change_Payment_Gateway::$is_request_to_change_payment )
+			||
+			( function_exists( "wcs_cart_contains_resubscribe" ) && wcs_cart_contains_resubscribe() )
+			||
+			( function_exists( "wcs_cart_contains_renewal"     ) && wcs_cart_contains_renewal() )
+		)
+		{
+			$this->availability = false;
+		}
+		else
+		{
+			$description = ( $this->node->env() ) ? $this->get_description() . __( " - SANDBOX ativado.", $this->id ) : $this->get_description();
+
+			if ( $description ) echo wpautop( wptexturize( trim( $description ) ) );
+
+			echo "<p>" . _e( "Ao finalizar a compra, você terá acesso ao código de barras do boleto bancário que poderá pagar no seu internet banking ou em uma lotérica.", $this->id ) . "</p>";
+			echo "<p>" . _e( "* O pedido será confirmado somente após a confirmação do pagamento.", $this->id ) . "</p>";
+		}
+	}
+
+	/**
+	 * Get User IP
+	 *
+	 * @return string
+	 */
+	public function get_user_ip()
+	{
+		if ( !empty( $_SERVER[ "HTTP_CLIENT_IP" ] ) )
+		{
+			$ip = $_SERVER[ "HTTP_CLIENT_IP" ];
+		}
+		elseif ( !empty( $_SERVER[ "HTTP_X_FORWARDED_FOR" ] ) )
+		{
+			$ip = $_SERVER[ "HTTP_X_FORWARDED_FOR" ];
+		}
+		else
+		{
+			$ip = $_SERVER[ "REMOTE_ADDR" ];
+		}
+
+		return $ip;
+	}
+
+	/**
+	 * Process the payment
+	 * Function called by WooCommerce to process the payment
+	 *
+	 * @since 	1.0.0
+	 * @param  	int $order_id
+	 * @return 	array
+	 */
+	public function process_payment( $order_id )
+	{
+		$notice        = "<b>" . $this->title . "</b>:";
+		wc_add_notice( "{$notice} método não finalizado!", "error" );
+		return [
+			"result"   => "fail",
+			"redirect" => ""
+		];
+
+		$order         = wc_get_order( $order_id );
+        $user          = wp_get_current_user();
+		$user_ip       = $this->get_user_ip();
+		$triibo_id     = get_user_meta( $user->ID, "triiboId_phone", true );
+		$token         = $this->api->validate_token( $user->ID );
+
+		$cpf           = WC()->checkout()->get_value( $this->id . "-card-holder-cpf" );
+		$email         = WC()->checkout()->get_value( "billing_email"    );
+		$zipcode       = WC()->checkout()->get_value( "billing_postcode" );
+		$addrNumber    = WC()->checkout()->get_value( "billing_number"   );
+
+		$holder_name   = WC()->checkout()->get_value( $this->id . "-card-holder-name"  );
+		$holder_cpf    = preg_replace( "/[^0-9]/", "", $cpf );
+		$holder_phone  = preg_replace( "/[^0-9]/", "", WC()->checkout()->get_value( $this->id . "-card-holder-phone" ) );
+
+		$card_number   = WC()->checkout()->get_value( $this->id . "-card-number" );
+		$card_exp      = preg_replace( "/[^0-9]/", "", WC()->checkout()->get_value( $this->id . "-card-expiry"       ) );
+		$card_cvc      = preg_replace( "/[^0-9]/", "", WC()->checkout()->get_value( $this->id . "-card-cvc"          ) );
+		$card_brand    = WC()->checkout()->get_value( $this->id . "-card-brand"        );
+		$installments  = WC()->checkout()->get_value( $this->id . "-card-installment"  );
+
+		$card_exp      = substr( $card_exp, 0, 2 ) . "/20" . substr( $card_exp, 2, 2 );
+
+		$tokenInfo     = [
+			"token"       => $token,
+			"card_number" => str_replace( " ", "-", $card_number ),
+			"brand"       => $card_brand,
+
+			"holder"      => $holder_name,
+			"month"       => substr( $card_exp, 0, 2 ),
+			"year"        => substr( $card_exp, 3    ),
+			"cvv"         => $card_cvc,
+		];
+
+		if ( $this->service == "asaas" )
+		{
+			$tokenInfo[ "infoAsaas" ] = [
+				"email"         => $email,
+				"document"      => $cpf,
+				"zipCode"       => $zipcode,
+				"addressNumber" => $addrNumber,
+				"cellPhone"     => $holder_phone,
+				"userIp"        => $user_ip,
+				"userId"        => $user->ID
+			];
+		}
+
+		/**
+		 * check if card hsa token
+		 */
+		$resp_card_tkn = $this->api->status_card( $tokenInfo );
+
+		if ( !$resp_card_tkn[ "success" ] )
+		{
+			$this->log( json_encode( $resp_card_tkn ) );
+
+			wc_add_notice( "{$notice} " . $resp_card_tkn[ "error" ], "error" );
+
+			return [
+				"result"   => "fail",
+				"redirect" => ""
+			];
+		}
+
+		$this->log( json_encode( $resp_card_tkn ) );
+
+		$tokenIndex    = $resp_card_tkn[ "tokenIndex" ];
+
+		$paymentInfo   = [
+			"orderId"     => $order_id,
+			"totalAmount" => ( int ) str_replace( ".", "", $order->get_total() ),
+			"description" => "Marketplace Triibo: #{$order_id}",
+			"tokenIndex"  => $tokenIndex,
+			"name"        => $holder_name,
+			"document"    => $holder_cpf,
+			"phone"       => $holder_phone,
+		];
+
+		if ( $this->service == "asaas" )
+		{
+			$paymentInfo[ "infoAsaas" ] = [
+				"email"        => $email,
+				"userId"       => $user->ID,
+				"userIp"       => $user_ip,
+				"type"         => "CREDIT_CARD",
+				"installments" => ( int ) $installments,
+				"dueDate"      => date( "Y-m-d" )
+			];
+		}
+
+		/**
+		 * make the payment
+		 */
+		$resp_pay      = $this->api->do_payment( "card", $token, $paymentInfo );
+
+		$this->log( json_encode( $resp_pay ) );
+
+		if ( !$resp_pay[ "success" ] )
+		{
+			wc_add_notice( "{$notice} " . $resp_pay[ "error" ], "error" );
+
+			return [
+				"result"   => "fail",
+				"redirect" => ""
+			];
+		}
+
+		$order->update_meta_data( "_triibo_payments_code", [
+			"type"      => "CREDIT_CARD",
+			"gateway"   => $this->service,
+			"paymentId" => $resp_pay[ "data" ][ "paymentInfo" ][ "id" ],
+		] );
+
+		$note  = "Payment ID: {$resp_pay[ "data" ][ "paymentInfo" ][ "id" ]}\n";
+		$note .= "Gateway: " . $this->service;
+		$order->add_order_note( $note );
+		$order->payment_complete();
+		$order->update_status( "processing", __( "Triibo_Payments: Pagamento aprovado", $this->id ) );
+		$order->save();
+
+		// Remove cart.
+		WC()->cart->empty_cart();
+
+		// Reduce stock for billets.
+		if ( function_exists( "wc_reduce_stock_levels" ) ) wc_reduce_stock_levels( $order_id );
+
+		return [
+			"result"   => "success",
+			"redirect" => $this->get_return_url( $order ),
+		];
+	}
+
+	/**
+	 * Register log
+	 *
+	 * @since 	1.0.0
+	 * @param 	string 	$message
+	 * @param 	boolean $is_error
+	 * @return 	void
+	 */
+	public function log( $message, $is_error = false )
+	{
+		if ( $this->debug == "yes" )
+		{
+			$this->log->add( $this->id, $message );
+		}
+		else if ( $is_error )
+		{
+			$this->log->add( $this->id, $message );
+		}
+	}
 
 }
