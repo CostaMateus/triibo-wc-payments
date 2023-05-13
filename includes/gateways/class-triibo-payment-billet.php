@@ -25,6 +25,21 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 * @var 	string
 	 */
 	protected $service         = null;
+	/**
+	 * Message of thank_you and user order page
+	 *
+	 * @var 	string
+	 * @since 	1.0.0
+	 */
+	protected $message;
+
+	/**
+	 * Billet expiration date
+	 *
+	 * @since 	1.0.0
+	 * @var 	string
+	 */
+	protected $due_date        = null;
 
 	/**
 	 * Instance of Api Node
@@ -85,10 +100,12 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
         $this->init_settings();
 
         // Define user set variables.
-        $this->title              = $this->get_option( "title"       );
-        $this->description        = $this->get_option( "description" );
-        $this->service            = $this->get_option( "service"     );
-        $this->debug              = $this->get_option( "debug"       );
+        $this->title              = $this->get_option( "title"         );
+        $this->description        = $this->get_option( "description"   );
+		$this->due_date           = $this->get_option( "due_date", "2" );
+		$this->message            = $this->get_option( "message",      );
+        $this->service            = $this->get_option( "service"       );
+        $this->debug              = $this->get_option( "debug"         );
 
         // Active logs.
         if ( $this->debug == "yes" ) $this->log = ( function_exists( "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
@@ -232,9 +249,6 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 */
 	public function is_available()
 	{
-		// TODO remover futuramente
-		return false;
-
 		$available = $this->get_option( "enabled" ) === "yes" &&
 					 $this->node->status() && $this->using_supported_currency();
 
@@ -254,27 +268,45 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 		$this->form_fields = [
 
 			// ativar / desativar meio de pagamento
-			"enabled"         => [
+			"enabled"     => [
 				"type"        => "checkbox",
 				"title"       => __( "Ativar / Desativar",                                        $this->id ),
 				"label"       => __( "Ativar Triibo Boleto",                                      $this->id ),
 				"default"     => "no",
 			],
 
-			"title"           => [
+			"title"       => [
 				"type"        => "text",
 				"title"       => __( "Título",                                                    $this->id ),
 				"description" => __( "Controla o título que o usuário vê durante o checkout.",    $this->id ),
 				"default"     => __( "Triibo Boleto",                                             $this->id ),
 			],
-			"description"     => [
+			"description" => [
 				"type"        => "textarea",
 				"title"       => __( "Descrição",                                                 $this->id ),
 				"description" => __( "Controla a descrição que o usuário vê durante o checkout.", $this->id ),
 				"default"     => __( "Pague com a Triibo Boleto",                                 $this->id ),
 			],
+			"due_date"    => [
+				"type"        => "number",
+				"title"       => __( "Validade do boleto",                                        $this->id ),
+				"description" => __( "Informe qual o prazo de validade do boleto bancário,
+									  em dias.<br> Mínimo 1.",                                    $this->id ),
+				"default"     => 2,
+				"custom_attributes" => [
+					"maxlength" => 2,
+					"min"       => 1,
+				],
+            ],
+			"message"     => [
+				"type"        => "textarea",
+				"title"       => __( "Mensagem de instrução",                                     $this->id ),
+				"description" => __( "Controla a mensagem de instrução que o usuário
+									  vê na finalização do pedido.",                              $this->id ),
+				"default"     => "Acesse o link abaixo para abrir o boleto.<br>Utilize o aplicativo do seu banco para ler o código de barras e efetuar o pagamento.",
+			],
 
-			"service"         => [
+			"service"     => [
 				"type"        => "select",
 				"title"       => __( "Serviço de pagamento",                                      $this->id ),
 				"description" => __( "Escolha qual será o serviço de pagamento padrão.",          $this->id ),
@@ -285,7 +317,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 				],
 			],
 
-			"debug"           => [
+			"debug"       => [
 				"type"        => "checkbox",
 				"title"       => __( "Debug Log",                                                 $this->id ),
 				"label"       => __( "Ativar logger",                                             $this->id ),
@@ -293,7 +325,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 				"default"     => "yes",
 			],
 
-			"configs"         => [
+			"configs"     => [
 				"type"        => "title",
 				"title"       => __( "Chaves de API",                                             $this->id ),
 				"description" => sprintf( __( "Acessar configurações globais %s.", $this->id ), $this->get_global_config() ),
@@ -311,6 +343,10 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	{
 		add_action( "wp_enqueue_scripts",                                       [ $this, "checkout_scripts"      ] );
 		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
+		add_action( "woocommerce_thankyou_"                        . $this->id, [ $this, "thankyou_page"         ] );
+
+		if ( is_account_page() )
+			add_action( "woocommerce_order_details_after_order_table", [ $this, "order_page" ] );
 	}
 
 	/**
@@ -437,107 +473,44 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 */
 	public function process_payment( $order_id )
 	{
-		$notice        = "<b>" . $this->title . "</b>:";
-		wc_add_notice( "{$notice} método não finalizado!", "error" );
-		return [
-			"result"   => "fail",
-			"redirect" => ""
-		];
+		$notice      = "<b>" . $this->title . "</b>:";
 
-		$order         = wc_get_order( $order_id );
-        $user          = wp_get_current_user();
-		$user_ip       = $this->get_user_ip();
-		$triibo_id     = get_user_meta( $user->ID, "triiboId_phone", true );
-		$token         = $this->api->validate_token( $user->ID );
+		$order       = wc_get_order( $order_id );
+        $user        = wp_get_current_user();
+		$user_ip     = $this->get_user_ip();
+		$token       = $this->api->validate_token( $user->ID );
 
-		$cpf           = WC()->checkout()->get_value( $this->id . "-card-holder-cpf" );
-		$email         = WC()->checkout()->get_value( "billing_email"    );
-		$zipcode       = WC()->checkout()->get_value( "billing_postcode" );
-		$addrNumber    = WC()->checkout()->get_value( "billing_number"   );
+		$f_name      = WC()->checkout()->get_value( "billing_first_name" );
+		$l_name      = WC()->checkout()->get_value( "billing_last_name"  );
+		$cpf         = WC()->checkout()->get_value( "billing_cpf"        );
+		$email       = WC()->checkout()->get_value( "billing_email"      );
+		$phone       = WC()->checkout()->get_value( "billing_phone"      );
 
-		$holder_name   = WC()->checkout()->get_value( $this->id . "-card-holder-name"  );
-		$holder_cpf    = preg_replace( "/[^0-9]/", "", $cpf );
-		$holder_phone  = preg_replace( "/[^0-9]/", "", WC()->checkout()->get_value( $this->id . "-card-holder-phone" ) );
-
-		$card_number   = WC()->checkout()->get_value( $this->id . "-card-number" );
-		$card_exp      = preg_replace( "/[^0-9]/", "", WC()->checkout()->get_value( $this->id . "-card-expiry"       ) );
-		$card_cvc      = preg_replace( "/[^0-9]/", "", WC()->checkout()->get_value( $this->id . "-card-cvc"          ) );
-		$card_brand    = WC()->checkout()->get_value( $this->id . "-card-brand"        );
-		$installments  = WC()->checkout()->get_value( $this->id . "-card-installment"  );
-
-		$card_exp      = substr( $card_exp, 0, 2 ) . "/20" . substr( $card_exp, 2, 2 );
-
-		$tokenInfo     = [
-			"token"       => $token,
-			"card_number" => str_replace( " ", "-", $card_number ),
-			"brand"       => $card_brand,
-
-			"holder"      => $holder_name,
-			"month"       => substr( $card_exp, 0, 2 ),
-			"year"        => substr( $card_exp, 3    ),
-			"cvv"         => $card_cvc,
-		];
-
-		if ( $this->service == "asaas" )
-		{
-			$tokenInfo[ "infoAsaas" ] = [
-				"email"         => $email,
-				"document"      => $cpf,
-				"zipCode"       => $zipcode,
-				"addressNumber" => $addrNumber,
-				"cellPhone"     => $holder_phone,
-				"userIp"        => $user_ip,
-				"userId"        => $user->ID
-			];
-		}
-
-		/**
-		 * check if card hsa token
-		 */
-		$resp_card_tkn = $this->api->status_card( $tokenInfo );
-
-		if ( !$resp_card_tkn[ "success" ] )
-		{
-			$this->log( json_encode( $resp_card_tkn ) );
-
-			wc_add_notice( "{$notice} " . $resp_card_tkn[ "error" ], "error" );
-
-			return [
-				"result"   => "fail",
-				"redirect" => ""
-			];
-		}
-
-		$this->log( json_encode( $resp_card_tkn ) );
-
-		$tokenIndex    = $resp_card_tkn[ "tokenIndex" ];
-
-		$paymentInfo   = [
+		$paymentInfo = [
 			"orderId"     => $order_id,
 			"totalAmount" => ( int ) str_replace( ".", "", $order->get_total() ),
 			"description" => "Marketplace Triibo: #{$order_id}",
-			"tokenIndex"  => $tokenIndex,
-			"name"        => $holder_name,
-			"document"    => $holder_cpf,
-			"phone"       => $holder_phone,
+			"name"        => "{$f_name} {$l_name}",
+			"document"    => preg_replace( "/[^0-9]/", "", $cpf   ),
+			"phone"       => preg_replace( "/[^0-9]/", "", $phone ),
 		];
 
 		if ( $this->service == "asaas" )
 		{
+			$due_date = date( "Y-m-d" ) . " +{$this->due_date} days";
+			$due_date = date( "Y-m-d", strtotime( $due_date ) );
+
 			$paymentInfo[ "infoAsaas" ] = [
 				"email"        => $email,
 				"userId"       => $user->ID,
 				"userIp"       => $user_ip,
-				"type"         => "CREDIT_CARD",
-				"installments" => ( int ) $installments,
-				"dueDate"      => date( "Y-m-d" )
+				"type"         => "BOLETO",
+				"installments" => 1,
+				"dueDate"      => $due_date
 			];
 		}
 
-		/**
-		 * make the payment
-		 */
-		$resp_pay      = $this->api->do_payment( "card", $token, $paymentInfo );
+		$resp_pay      = $this->api->do_payment( "billet", $token, $paymentInfo );
 
 		$this->log( json_encode( $resp_pay ) );
 
@@ -552,16 +525,17 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 		}
 
 		$order->update_meta_data( "_triibo_payments_code", [
-			"type"      => "CREDIT_CARD",
+			"type"      => "BILLET",
 			"gateway"   => $this->service,
-			"paymentId" => $resp_pay[ "data" ][ "paymentInfo" ][ "id" ],
+			"paymentId" => $resp_pay[ "data" ][ "paymentInfo" ][ "id"      ],
+			"invoice"   => $resp_pay[ "data" ][ "paymentInfo" ][ "invoice" ]
 		] );
 
 		$note  = "Payment ID: {$resp_pay[ "data" ][ "paymentInfo" ][ "id" ]}\n";
 		$note .= "Gateway: " . $this->service;
 		$order->add_order_note( $note );
-		$order->payment_complete();
-		$order->update_status( "processing", __( "Triibo_Payments: Pagamento aprovado", $this->id ) );
+
+		$order->update_status( "on-hold", __( "Triibo_Payments: Aguardando pagamento", $this->id ) );
 		$order->save();
 
 		// Remove cart.
@@ -574,6 +548,93 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 			"result"   => "success",
 			"redirect" => $this->get_return_url( $order ),
 		];
+	}
+
+	/**
+	 * Thank You page message.
+	 *
+	 * @param int $order_id
+	 */
+	public function thankyou_page( $order_id )
+	{
+		$order = wc_get_order( $order_id );
+
+		if ( $order->get_payment_method() != $this->id ) return;
+
+		$code  = $order->get_meta( "_triibo_payments_code" );
+
+		return $this->render_code( $code[ "invoice" ] );
+	}
+
+	/**
+	 * Order Page message
+	 *
+	 * @since 	1.0.0
+	 * @param 	object 	$order
+	 * @return 	string
+	 */
+	public function order_page( $order )
+	{
+		if ( $order->get_payment_method() != $this->id ) return;
+
+		$code = $order->get_meta( "_triibo_payments_code" );
+
+		return $this->render_code( $code[ "invoice" ] );
+	}
+
+	/**
+	 * Render billet code on thnak_you/order page
+	 *
+	 * @since 	1.0.0
+	 * @param 	array 	$invoice
+	 * @return 	void
+	 */
+	public function render_code( $invoice )
+	{
+		if ( !empty( $invoice ) )
+		{
+			$link = $invoice[ "url"           ];
+			$code = $invoice[ "digitableLine" ];
+
+			?>
+			<div class="tpb-billet-container" style="text-align: center;margin: 20px 0" >
+				<div class="tpb-billet-instructions" >
+					<?php echo $this->message; ?>
+				</div>
+				<input type="hidden" value="<?php echo $code; ?>" id="copiar" >
+
+				<a class="tpb-billet-p button tpb-billet-button-copy-code" style="margin:1em auto;" href="<?php echo $link; ?>" target="_blank" >Acessar boleto</a>
+
+				<p class="tpb-billet-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" >Linha digitável do boleto</p>
+				<p class="tpb-billet-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" ><?php echo $code; ?></p>
+
+				<button class="button tpb-billet-button-copy-code" style="margin:1em auto;" onclick="copyCode()" >
+					<?php echo __( "Copiar o código acima", $this->id ); ?>
+				</button>
+				<div class="tpb-billet-response-output inactive" style="margin:1em .5em; padding:.2em 1em; border:2px solid #46b450; display:none;" aria-hidden="true" >
+					<?php echo __( "Código copiado para a área de transferência.", $this->id ); ?>
+				</div>
+			</div>
+			<script>
+				function copyCode()
+				{
+					let copyText = document.getElementById( "copiar" );
+					copyText.type = "text";
+					copyText.select();
+					copyText.setSelectionRange( 0, 99999 );
+					document.execCommand( "copy" );
+					copyText.type = "hidden";
+
+					if ( jQuery( "div.tpb-billet-response-output" ) )
+						jQuery( "div.tpb-billet-response-output" ).show();
+					else
+						alert( "Código copiado para a área de transferência." );
+
+					return false;
+				}
+			</script>
+			<?php
+		}
 	}
 
 	/**
