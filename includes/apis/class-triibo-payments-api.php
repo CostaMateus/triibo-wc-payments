@@ -264,45 +264,6 @@ class Triibo_Payments_Api
 	 */
 	public function do_payment( $method, $token, $data )
 	{
-		switch ( $method )
-		{
-			case "billet":
-				return $this->do_payment_billet( $token, $data );
-			break;
-
-			case "card":
-				return $this->do_payment_card( $token, $data );
-			break;
-
-			case "pix":
-				return $this->do_payment_pix( $token, $data );
-			break;
-		}
-	}
-
-	/**
-	 * Undocumented function
-	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$token
-	 * @param 	array 	$data
-	 * @return 	array
-	 */
-	private function do_payment_billet()
-	{
-		return [];
-	}
-
-	/**
-	 * Undocumented function
-	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$token
-	 * @param 	array 	$data
-	 * @return 	array
-	 */
-	private function do_payment_card( $token, $data )
-	{
 		$descrip  = $this->treatDescription( $data[ "description" ] );
 
 		$params   = [
@@ -312,13 +273,16 @@ class Triibo_Payments_Api
 					"orderId"     => $data[ "orderId"     ],
 					"totalAmount" => $data[ "totalAmount" ], // em centavos
 					"description" => $descrip,
-					"tokenIndex"  => $data[ "tokenIndex"  ],
+					// "tokenIndex"  => $data[ "tokenIndex"  ],
 					"name"        => $data[ "name"        ],
 					"document"    => $data[ "document"    ],
 					"cellPhone"   => $data[ "phone"       ],
 				],
 			]
 		];
+
+		if ( $method == "card" )
+			$params[ "payload" ][ "order" ][ "tokenIndex" ] = $data[ "tokenIndex" ];
 
         if ( $this->gateway->get_service() == "asaas" )
             $params[ "payload" ][ "orderAsaas" ] = $data[ "infoAsaas" ];
@@ -328,19 +292,6 @@ class Triibo_Payments_Api
 		$this->log( "INFO - do_payment: " . json_encode( [ $params, $response ] ) );
 
 		return $response;
-	}
-
-	/**
-	 * Undocumented function
-	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$token
-	 * @param 	array 	$data
-	 * @return 	array
-	 */
-	private function do_payment_pix()
-	{
-		return [];
 	}
 
 	/**
