@@ -254,7 +254,8 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 		$available = $this->get_option( "enabled" ) === "yes" &&
 					 $this->node->status() && $this->using_supported_currency();
 
-		if ( !class_exists( "Extra_Checkout_Fields_For_Brazil" ) ) $available = false;
+		if ( !is_plugin_active( "woocommerce-extra-checkout-fields-for-brazil/woocommerce-extra-checkout-fields-for-brazil.php" ) )
+			$available = false;
 
 		return $available;
 	}

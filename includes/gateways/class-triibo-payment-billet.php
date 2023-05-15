@@ -25,6 +25,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 * @var 	string
 	 */
 	protected $service         = null;
+
 	/**
 	 * Message of thank_you and user order page
 	 *
@@ -252,7 +253,8 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 		$available = $this->get_option( "enabled" ) === "yes" &&
 					 $this->node->status() && $this->using_supported_currency();
 
-		if ( !class_exists( "Extra_Checkout_Fields_For_Brazil" ) ) $available = false;
+		if ( !is_plugin_active( "woocommerce-extra-checkout-fields-for-brazil/woocommerce-extra-checkout-fields-for-brazil.php" ) )
+			$available = false;
 
 		return $available;
 	}
@@ -591,6 +593,13 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 */
 	public function render_code( $invoice )
 	{
+		/**
+		 * TODO
+		 * adicionar ação no woocommerce_order_actions
+		 * para buscar boleto ou pix do pedido
+		 * qnd não retornar nada
+		 */
+
 		if ( !empty( $invoice ) )
 		{
 			$link = $invoice[ "url"           ];
@@ -634,6 +643,10 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 				}
 			</script>
 			<?php
+		}
+		else
+		{
+			// mensagem de erro
 		}
 	}
 
