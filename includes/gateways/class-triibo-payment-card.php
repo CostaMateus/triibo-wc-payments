@@ -16,7 +16,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @var 	object
 	 */
-	protected static $instance = null;
+	protected static $instance  = null;
 
 	/**
 	 * Payment gateway (ex Cielo).
@@ -24,7 +24,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @var 	string
 	 */
-	protected $service         = null;
+	protected $service          = null;
 
 	/**
 	 * Type of payment in installments, in cash or in installments.
@@ -40,7 +40,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @var 	integer
 	 */
-	protected $installments    = null;
+	protected $installments     = null;
 
 	/**
 	 * Instance of Api Node
@@ -48,7 +48,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @var 	Triibo_Api_Node
 	 */
-	protected $node            = null;
+	protected $node             = null;
 
 	/**
 	 * Instance of Triibo_Payment_Api
@@ -56,7 +56,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @var 	Triibo_Payment_Api
 	 */
-	protected $api             = null;
+	protected $api              = null;
 
 	/**
 	 * Debug
@@ -64,7 +64,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @var 	string
 	 */
-	protected $debug           = null;
+	protected $debug            = null;
 
 	/**
 	 * Logger
@@ -72,7 +72,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * @since 	1.0.0
 	 * @var 	wc_get_logger|WC_Logger|null
 	 */
-	protected $log             = null;
+	protected $log              = null;
 
 	/**
 	 * Constructor
