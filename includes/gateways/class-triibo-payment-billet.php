@@ -559,7 +559,9 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Thank You page message.
 	 *
-	 * @param int $order_id
+	 * @since 	1.0.0
+	 * @param 	int 	$order_id
+	 * @return 	void
 	 */
 	public function thankyou_page( $order_id )
 	{
@@ -569,7 +571,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 		$code  = $order->get_meta( "_triibo_payments_code" );
 
-		return $this->render_code( $code[ "invoice" ] );
+		$this->render_code( $code[ "invoice" ] );
 	}
 
 	/**
@@ -577,7 +579,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 *
 	 * @since 	1.0.0
 	 * @param 	object 	$order
-	 * @return 	string
+	 * @return 	void
 	 */
 	public function order_page( $order )
 	{
@@ -585,7 +587,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 		$code = $order->get_meta( "_triibo_payments_code" );
 
-		return $this->render_code( $code[ "invoice" ] );
+		$this->render_code( $code[ "invoice" ] );
 	}
 
 	/**
@@ -595,7 +597,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 * @param 	array 	$invoice
 	 * @return 	void
 	 */
-	public function render_code( $invoice )
+	private function render_code( $invoice )
 	{
 		if ( !empty( $invoice ) )
 		{
@@ -692,16 +694,16 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 			if ( $response[ "success" ] && isset( $response[ "data" ] ) )
 			{
-				$paymentInfo              = $response[ "data" ][ "paymentStatus" ];
-				$code[ "invoice" ]        = $paymentInfo[ "invoice" ];
+				$payment_info              = $response[ "data" ][ "paymentStatus" ];
+				$code[ "invoice" ]         = $payment_info[ "invoice" ];
 
 				$order->update_meta_data( "_triibo_payments_code", $code );
 				$order->add_order_note( "Boleto " . $this->service . " recuperado." );
 				$order->save();
 
-				$paymentInfo[ "orderId" ] = $order->ID;
+				$payment_info[ "orderId" ] = $order->ID;
 
-				$this->log( json_encode( $paymentInfo ) );
+				$this->log( json_encode( $payment_info ) );
 			}
 		}
 	}
@@ -723,14 +725,14 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 			if ( $response[ "success" ] && isset( $response[ "data" ] ) )
 			{
-				$paymentInfo = $response[ "data" ][ "paymentStatus" ];
+				$payment_info = $response[ "data" ][ "paymentStatus" ];
 
-				if ( $paymentInfo[ "changed" ] && $paymentInfo[ "approved" ] )
+				if ( $payment_info[ "changed" ] && $payment_info[ "approved" ] )
 				{
 					$order->payment_complete();
 					$order->update_status( "processing", __( "Triibo_Payments: Pagamento aprovado", $this->id ) );
 				}
-				elseif ( $paymentInfo[ "changed" ] && !$paymentInfo[ "approved" ] )
+				elseif ( $payment_info[ "changed" ] && !$payment_info[ "approved" ] )
 				{
 					$order->update_status( "failed", __( "Triibo_Payments: Pagamento malsucedido", $this->id ) );
 				}
@@ -741,7 +743,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 				$order->save();
 
-				$this->log( json_encode( $paymentInfo ) );
+				$this->log( json_encode( $payment_info ) );
 			}
 		}
 	}
@@ -752,13 +754,13 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 * @since 	1.0.0
 	 * @param 	string 	$user_id
 	 * @param 	string 	$service
-	 * @param 	string 	$paymentId
+	 * @param 	string 	$payment_id
 	 * @return 	void
 	 */
-	private function process_payment_status( $user_id, $service, $paymentId )
+	private function process_payment_status( $user_id, $service, $payment_id )
 	{
 		$token    = $this->api->validate_token( $user_id );
-		$response = $this->api->payment_status( $token, $service, $paymentId );
+		$response = $this->api->payment_status( $token, $service, $payment_id );
 
 		return $response;
 	}
