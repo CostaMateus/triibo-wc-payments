@@ -314,20 +314,14 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 				"title"       => __( "Mensagem de instrução 1",                                   $this->id ),
 				"description" => __( "Controla a mensagem de instrução que o usuário
 									  vê na tela de finalização do pedido.",                      $this->id ),
-				"default"     => __( "Ao finalizar a compra, você terá acesso ao código de
-									  barras do boleto bancário que poderá pagar no seu internet
-									  banking ou em uma lotérica.<br><br>
-									  * O pedido será confirmado somente após o pagamento
-									  ser confirmado.",                                           $this->id ),
+				"default"     => __( "Ao finalizar a compra, você terá acesso ao código de barras do boleto bancário que poderá pagar no seu internet banking ou em uma lotérica.<br><br> * O pedido será confirmado somente após o pagamento ser confirmado.", $this->id ),
 			],
 			"message_pos"     => [
 				"type"        => "textarea",
 				"title"       => __( "Mensagem de instrução 2",                                   $this->id ),
 				"description" => __( "Controla a mensagem de instrução que o usuário
 									  vê na tela de obrigado e na tela de meus pedidos.",         $this->id ),
-				"default"     => __( "Acesse o link abaixo para abrir o boleto.<br>
-									  Utilize o aplicativo do seu banco para ler o código de
-									  barras e efetuar o pagamento.",                             $this->id ),
+				"default"     => __( "Acesse o link abaixo para abrir o boleto.<br> Utilize o aplicativo do seu banco para ler o código de barras e efetuar o pagamento.", $this->id ),
 			],
 
 			"service"     => [
@@ -365,7 +359,6 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 */
 	public function init_actions_filters()
 	{
-		add_action( "wp_enqueue_scripts",                                       [ $this, "checkout_scripts"      ] );
 		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
 		add_action( "woocommerce_thankyou_"                        . $this->id, [ $this, "thankyou_page"         ] );
 		add_action( "woocommerce_email_after_order_table",                      [ $this, "email_instructions"    ] );
@@ -393,50 +386,6 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 		wp_enqueue_script( "{$this->id}_admin", plugins_url( $js_path, Triibo_Payments::FILE ), [ "json2", "jquery" ], $js_ver, true );
 
 		require_once ( dirname( Triibo_Payments::FILE ) . "/templates/admin/wc-settings.php" );
-	}
-
-	/**
-	 * Checkout scripts.
-	 *
-	 * @return void
-	 */
-	public function checkout_scripts()
-	{
-		$load_scripts = false;
-
-		if ( is_checkout() )         $load_scripts = true;
-		if ( $this->is_available() ) $load_scripts = true;
-		if ( false === $load_scripts ) return;
-
-		$suffix       = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
-
-		// $css_path     = "assets/css/frontend/style{$suffix}.css";
-		// $css_ver      = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $css_path ) );
-		// wp_enqueue_style(  "{$this->id}_checkout", plugins_url( $css_path, Triibo_Payments::FILE ), false, $css_ver, "all" );
-
-		$js_path      = "assets/js/frontend/billet.script{$suffix}.js";
-		$js_ver       = date( "ymdHis", filemtime( plugin_dir_path( Triibo_Payments::FILE ) . $js_path  ) );
-		wp_enqueue_script( "{$this->id}_checkout", plugins_url( $js_path,  Triibo_Payments::FILE ), [ "json2", "jquery", "woocommerce-extra-checkout-fields-for-brazil-front", "jquery-mask" ], $js_ver, true );
-
-		$user         = wp_get_current_user();
-		$token        = $this->api->validate_token( $user->ID );
-
-		$url          = get_rest_url( null, "triibo-payments/v1/cards/brand" );
-
-		wp_localize_script(
-			"{$this->id}_checkout",
-			"{$this->id}_params",
-			[
-				"id"            => $this->id,
-				"user_id"       => $user->ID,
-				"rest_url"      => $url,
-				"invalid_token" => $token ? false : true,
-				"messages"      => [
-					"session_error" => __( "Ocorreu um error. Por favor, atualize a página.",            $this->id ),
-					"invalid_token" => __( "Por favor, faça login pela Triibo para finalizar a compra.", $this->id ),
-				],
-			]
-		);
 	}
 
 	/**
