@@ -88,7 +88,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 
         $this->method_title       = __( "Triibo Cartão de Crédito",                                  $this->id );
         $this->method_description = __( "Pagamentos com cartão de crédito usando a Triibo Gateway.", $this->id );
-        $this->order_button_text  = __( "Prossiga para o pagamento",                                 $this->id );
+        $this->order_button_text  = __( "Efetuar pagamento",                                         $this->id );
 
         $this->supports           = apply_filters( $this->id . "_supports_array", [
             "default_credit_card_form",
