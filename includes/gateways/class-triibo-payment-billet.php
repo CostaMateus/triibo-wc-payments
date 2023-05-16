@@ -346,6 +346,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 		add_action( "wp_enqueue_scripts",                                       [ $this, "checkout_scripts"      ] );
 		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
 		add_action( "woocommerce_thankyou_"                        . $this->id, [ $this, "thankyou_page"         ] );
+		add_action( "woocommerce_email_after_order_table",                      [ $this, "email_instructions"    ] );
 
 		if ( is_account_page() )
 			add_action( "woocommerce_order_details_after_order_table", [ $this, "order_page" ] );
@@ -554,6 +555,34 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 			"result"   => "success",
 			"redirect" => $this->get_return_url( $order ),
 		];
+	}
+
+	/**
+	 * Add content to the WC emails.
+	 *
+	 * @since 	1.0.0
+	 * @param 	object 	$order
+	 * @return 	void
+	 */
+	public function email_instructions( $order )
+	{
+		if ( $order->get_payment_method() != $this->id ) return;
+
+		$code    = $order->get_meta( "_triibo_payments_code" );
+		$invoice = $code[ "invoice" ];
+
+		$data    = [
+			"link"    => $invoice[ "url"           ],
+			"code"    => $invoice[ "digitableLine" ],
+			"message" => $this->message,
+		];
+
+		wc_get_template(
+			"on-hold.php",
+			$data,
+			"",
+			Triibo_Payments::get_templates_path() . "emails/"
+		);
 	}
 
 	/**
