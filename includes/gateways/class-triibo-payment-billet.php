@@ -542,8 +542,9 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 		$invoice = $code[ "invoice" ];
 
 		$data    = [
-			"link"    => $invoice[ "url"           ],
-			"code"    => $invoice[ "digitableLine" ],
+			"type" => $code[ "type" ],
+			"link" => $invoice[ "url"           ],
+			"code" => $invoice[ "digitableLine" ],
 		];
 
 		wc_get_template(
