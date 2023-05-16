@@ -604,7 +604,7 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 			$code = $invoice[ "pixCode" ];
 
 			?>
-			<div class="tpb-pix-container" style="text-align: center;margin: 20px 0" >
+			<div class="tpb-pix-container" style="text-align:center; margin:20px 0;" >
 				<div class="tpb-pix-instructions" >
 					<?php echo $this->message_pos; ?>
 				</div>
