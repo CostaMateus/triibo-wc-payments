@@ -295,6 +295,33 @@ class Triibo_Payments_Api
 	}
 
 	/**
+	 * Check payment status
+	 *
+	 * @since 	1.0.0
+	 * @param 	string 	$token
+	 * @param 	string 	$gateway
+	 * @param 	string 	$payment_id
+	 * @return 	array
+	 */
+	public function payment_status( $token, $gateway, $payment_id )
+	{
+		$params   = [
+			"payload" => [
+				"gateway"     => $gateway,
+				"paymentInfo" => [
+					"id" => $payment_id,
+				],
+			]
+		];
+
+		$response = $this->node->payment_status( $token, $params );
+
+		$this->log( "INFO - payment_status: " . json_encode( [ $params, $response ] ) );
+
+		return $response;
+	}
+
+	/**
 	 * Treat description
 	 *
 	 * @since 	1.0.0
