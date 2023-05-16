@@ -21,5 +21,4 @@ defined( "ABSPATH" ) || exit;
 		Ou ainda, você pode copiar o código de barras abaixo:
 	</p>
 	<p style="margin:.25em 0 .5em 0; font-size:14px; word-break:break-all;" ><?php echo $code; ?></p>
-	<p><?php echo $message; ?></p>
 </div>
