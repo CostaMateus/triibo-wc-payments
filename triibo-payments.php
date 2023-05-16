@@ -159,6 +159,17 @@ class Triibo_Payments
 	}
 
 	/**
+	 * Get templates path.
+	 *
+	 * @since 	1.0.0
+	 * @return 	string
+	 */
+	public static function get_templates_path()
+    {
+		return plugin_dir_path( self::FILE ) . "templates/";
+	}
+
+	/**
 	 * Register the gateway for use
 	 *
 	 * @since 	1.0.0
