@@ -27,12 +27,20 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	protected $service         = null;
 
 	/**
+	 * Message of checkout page
+	 *
+	 * @var 	string
+	 * @since 	1.0.0
+	 */
+	protected $message_pre     = "";
+
+	/**
 	 * Message of thank_you and user order page
 	 *
 	 * @var 	string
 	 * @since 	1.0.0
 	 */
-	protected $message;
+	protected $message_pos     = "";
 
 	/**
 	 * Billet expiration date
@@ -104,7 +112,8 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
         $this->title              = $this->get_option( "title"         );
         $this->description        = $this->get_option( "description"   );
 		$this->due_date           = $this->get_option( "due_date", "2" );
-		$this->message            = $this->get_option( "message",      );
+		$this->message_pre        = $this->get_option( "message_pre",  );
+		$this->message_pos        = $this->get_option( "message_pos",  );
         $this->service            = $this->get_option( "service"       );
         $this->debug              = $this->get_option( "debug"         );
 
@@ -300,11 +309,22 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 					"min"       => 1,
 				],
             ],
-			"message"     => [
+			"message_pre"     => [
 				"type"        => "textarea",
-				"title"       => __( "Mensagem de instrução",                                     $this->id ),
+				"title"       => __( "Mensagem de instrução 1",                                   $this->id ),
 				"description" => __( "Controla a mensagem de instrução que o usuário
-									  vê na finalização do pedido.",                              $this->id ),
+									  vê na tela de finalização do pedido.",                      $this->id ),
+				"default"     => __( "Ao finalizar a compra, você terá acesso ao código de
+									  barras do boleto bancário que poderá pagar no seu internet
+									  banking ou em uma lotérica.<br><br>
+									  * O pedido será confirmado somente após o pagamento
+									  ser confirmado.",                                           $this->id ),
+			],
+			"message_pos"     => [
+				"type"        => "textarea",
+				"title"       => __( "Mensagem de instrução 2",                                   $this->id ),
+				"description" => __( "Controla a mensagem de instrução que o usuário
+									  vê na tela de obrigado e na tela de meus pedidos.",         $this->id ),
 				"default"     => __( "Acesse o link abaixo para abrir o boleto.<br>
 									  Utilize o aplicativo do seu banco para ler o código de
 									  barras e efetuar o pagamento.",                             $this->id ),
@@ -445,8 +465,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 			if ( $description ) echo wpautop( wptexturize( trim( $description ) ) );
 
-			echo "<p>" . _e( "Ao finalizar a compra, você terá acesso ao código de barras do boleto bancário que poderá pagar no seu internet banking ou em uma lotérica.", $this->id ) . "</p>";
-			echo "<p>" . _e( "* O pedido será confirmado somente após a confirmação do pagamento.", $this->id ) . "</p>";
+			echo "<p>{$this->message_pre}</p>";
 		}
 	}
 
@@ -637,7 +656,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 			?>
 			<div class="tpb-billet-container" style="text-align: center;margin: 20px 0" >
 				<div class="tpb-billet-instructions" >
-					<?php echo $this->message; ?>
+					<?php echo $this->message_pos; ?>
 				</div>
 				<input type="hidden" value="<?php echo $code; ?>" id="copiar" >
 
