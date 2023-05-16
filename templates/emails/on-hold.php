@@ -25,7 +25,9 @@ defined( "ABSPATH" ) || exit;
 		<p style="margin:.25em 0 .5em 0; font-size:14px; word-break:break-all;" ><?php echo $code; ?></p>
 	<?php else : ?>
 		<p style="margin:.5em 0 .25em 0;" >QR Code para pagamento do seu pedido</p>
-		<img style="margin:.25em auto .5em auto; width:200px; height:200px" src="data:image/gif;base64,<?php echo $link; ?>" />
+		<div style="text-align:center;" >
+			<img style="margin:.25em 0 .5em 0; width:50%; height:50%" src="data:image/gif;base64,<?php echo $link; ?>" />
+		</div>
 
 		<p style="margin:.5em 0 .25em 0;" >Ou se você preferir pode copiar o código PIX abaixo</p>
 		<p style="margin:.25em 0 .5em 0; font-size:14px; word-break:break-all;" ><?php echo $code; ?></p>
