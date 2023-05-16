@@ -88,7 +88,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
         $this->method_title       = __( "Triibo Boleto",                                  $this->id );
         $this->method_description = __( "Pagamentos com boleto usando a Triibo Gateway.", $this->id );
-        $this->order_button_text  = __( "Prossiga para o pagamento",                      $this->id );
+        $this->order_button_text  = __( "Efetuar pagamento",                              $this->id );
 
         $this->supports           = apply_filters( $this->id . "_supports_array", [
             "products",
@@ -305,7 +305,9 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 				"title"       => __( "Mensagem de instrução",                                     $this->id ),
 				"description" => __( "Controla a mensagem de instrução que o usuário
 									  vê na finalização do pedido.",                              $this->id ),
-				"default"     => "Acesse o link abaixo para abrir o boleto.<br>Utilize o aplicativo do seu banco para ler o código de barras e efetuar o pagamento.",
+				"default"     => __( "Acesse o link abaixo para abrir o boleto.<br>
+									  Utilize o aplicativo do seu banco para ler o código de
+									  barras e efetuar o pagamento.",                             $this->id ),
 			],
 
 			"service"     => [
