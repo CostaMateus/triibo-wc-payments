@@ -610,7 +610,8 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 				</div>
 				<input type="hidden" value="<?php echo $code; ?>" id="copiar" >
 
-				<img style="width:200px; height:200px" src="data:image/gif;base64,<?php echo $link; ?>" />
+				<img style="max-width:350px; width:50%; min-width:200px; max-height:350px; height:50%; min-height:200px;"
+					src="data:image/gif;base64,<?php echo $link; ?>" />
 
 				<p class="tpb-pix-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" >Código PIX</p>
 				<p class="tpb-pix-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" ><?php echo $code; ?></p>
