@@ -300,7 +300,7 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 			],
 			"due_date"    => [
 				"type"        => "number",
-				"title"       => __( "Validade do boleto",                                        $this->id ),
+				"title"       => __( "Validade do PIX",                                           $this->id ),
 				"description" => __( "Informe qual o prazo de validade do PIX, em dias.<br>
 									  Mínimo 1.",                                                 $this->id ),
 				"default"     => 2,
