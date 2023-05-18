@@ -13,7 +13,7 @@ $is_installed = false;
 if ( function_exists( "get_plugins" ) )
 {
 	$all_plugins  = get_plugins();
-	$key          = "woocommerce-subscriptions/woocommerce-subscriptions.php";
+	$key          = "woocommerce/woocommerce.php";
 	$is_installed = array_key_exists( $key, $all_plugins );
 }
 ?>
