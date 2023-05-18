@@ -91,6 +91,11 @@ class Triibo_Payments
 		add_action( "triibo_api_service_add_button",                        [ $this, "add_btn"             ], 11    );
 		add_action( "triibo_api_service_list_plugin_node",                  [ $this, "add_info_dependency" ],       );
 
+		// Order Box Actions
+		add_action( "woocommerce_order_actions",                                         [ $this, "add_order_box_action"   ] );
+		add_action( "woocommerce_order_action_wc_triibo_payments_billet_recover_status", [ $this, "process_recover_status" ] );
+		add_action( "woocommerce_order_action_wc_triibo_payments_pix_recover_status",    [ $this, "process_recover_status" ] );
+
 		new Triibo_Payments_Rest();
 	}
 
@@ -238,6 +243,101 @@ class Triibo_Payments
 	public function add_info_dependency()
 	{
 		echo "<p> - Triibo Payments</p>";
+	}
+
+	/**
+	 * Add custom action to order box.
+	 *
+	 * @since 	1.0.0
+	 * @param 	array 	$actions
+	 * @return 	array
+	 */
+	public function add_order_box_action( $actions )
+	{
+		global $theorder;
+
+		$billet = Triibo_Payment_Billet::get_instance();
+		$pix    = Triibo_Payment_Pix::get_instance();
+
+		$method = $theorder->get_payment_method();
+
+		if ( $method != $billet->get_id() && $method != $pix->get_id() ) return $actions;
+
+		$code   = $theorder->get_meta( "_triibo_payments_code" );
+
+		if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( "on-hold" ) )
+		{
+			if ( $method == $billet->get_id() )
+				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet->get_id() );
+
+			if ( $method == $pix->get_id() )
+				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix->get_id() );
+		}
+		elseif ( $theorder->has_status( "on-hold" ) )
+		{
+			if ( $method == $billet->get_id() )
+				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet->get_id() );
+
+			if ( $method == $pix->get_id() )
+				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix->get_id() );
+		}
+
+		return $actions;
+	}
+
+	/**
+	 * Process custom action order to recover billet data/status.
+	 *
+	 * @since 	1.0.0
+	 * @param 	object 	$order
+	 * @return 	void
+	 */
+	public function process_recover_status( $order )
+	{
+		$code     = $order->get_meta( "_triibo_payments_code" );
+
+		$id       = self::DOMAIN . ( ( $code[ "type" ] == "BILLET" ) ? "_billet" : "_pix" );
+		$method   = ( $code[ "type" ] == "BILLET" ) ? Triibo_Payment_Billet::get_instance() : Triibo_Payment_Pix::get_instance();
+		$api      = $method->get_api();
+
+		$token    = $api->validate_token( $order->user_id );
+		$response = $api->payment_status( $token, $code[ "gateway" ], $code[ "paymentId" ] );
+
+		if ( $response[ "success" ] && isset( $response[ "data" ] ) )
+		{
+			$payment_info = $response[ "data" ][ "paymentStatus" ];
+
+			// se invoice retornou, atualiza metadata
+			if ( is_array( $payment_info[ "invoice" ] ) )
+			{
+				$code[ "invoice" ] = $payment_info[ "invoice" ];
+				$order->update_meta_data( "_triibo_payments_code", $code );
+			}
+
+			// se teve mudança de status e foi aprovado, muda pra processando
+			if ( $payment_info[ "changed" ] && $payment_info[ "approved" ] )
+			{
+				$order->payment_complete();
+				$order->update_status( "processing", __( "Triibo_Payments: Pagamento aprovado", $id ) );
+			}
+
+			// se teve mudança de status e não foi aprovado, muda pra falha
+			if ( $payment_info[ "changed" ] && !$payment_info[ "approved" ] )
+			{
+				$order->update_status( "failed", __( "Triibo_Payments: Pagamento malsucedido", $id ) );
+			}
+
+			$payment_info[ "orderId" ] = $order->ID;
+			unset( $payment_info[ "invoice" ] );
+
+			$method->log( "INFO - payment_status: " . json_encode( $payment_info ) );
+		}
+		else
+		{
+			$order->add_order_note( "Falha na consulta do dados/status do pagamento." );
+		}
+
+		$order->save();
 	}
 
 }

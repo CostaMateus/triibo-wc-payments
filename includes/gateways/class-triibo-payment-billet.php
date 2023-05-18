@@ -365,11 +365,6 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 		if ( is_account_page() )
 			add_action( "woocommerce_order_details_after_order_table", [ $this, "order_page" ] );
-
-		// Order Box Actions
-		add_action( "woocommerce_order_actions",                              [ $this, "add_order_box_action"   ] );
-		add_action( "woocommerce_order_action_wc_{$this->id}_billet_recover", [ $this, "process_billet_recover" ] );
-		add_action( "woocommerce_order_action_wc_{$this->id}_billet_status",  [ $this, "process_billet_status"  ] );
 	}
 
 	/**
@@ -642,126 +637,6 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 			</script>
 			<?php
 		}
-	}
-
-	/**
-	 * Add custom action to order box.
-	 *
-	 * @since 	1.0.0
-	 * @param 	array 	$actions
-	 * @return 	array
-	 */
-	public function add_order_box_action( $actions )
-	{
-		global $theorder;
-
-		if ( $theorder->get_payment_method() == $this->id )
-		{
-			$code = $theorder->get_meta( "_triibo_payments_code" );
-
-			if ( is_null( $code[ "invoice" ] ) && $theorder->has_status( "on-hold" ) )
-			{
-				$actions[ "wc_{$this->id}_billet_recover" ] = __( "Recuperar boleto - {$this->method_title}", $this->id );
-
-				return $actions;
-			}
-			elseif ( $theorder->has_status( "on-hold" ) )
-			{
-				$actions[ "wc_{$this->id}_billet_status" ] = __( "Atualizar status boleto - {$this->method_title}", $this->id );
-
-				return $actions;
-			}
-		}
-
-		return $actions;
-	}
-
-	/**
-	 * Process custom action order to recover billet data.
-	 *
-	 * @since 	1.0.0
-	 * @param 	object 	$order
-	 * @return 	void
-	 */
-	public function process_billet_recover( $order )
-	{
-		$code = $order->get_meta( "_triibo_payments_code" );
-
-		if ( $code[ "type" ] == "BILLET" && is_null( $code[ "invoice" ] ) )
-		{
-			$response = $this->process_payment_status( $order->user_id, $code[ "gateway" ], $code[ "paymentId" ] );
-
-			if ( $response[ "success" ] && isset( $response[ "data" ] ) )
-			{
-				$payment_info              = $response[ "data" ][ "paymentStatus" ];
-				$code[ "invoice" ]         = $payment_info[ "invoice" ];
-
-				$order->update_meta_data( "_triibo_payments_code", $code );
-				$order->add_order_note( "Boleto " . $this->service . " recuperado." );
-				$order->save();
-
-				$payment_info[ "orderId" ] = $order->ID;
-
-				$this->log( json_encode( $payment_info ) );
-			}
-		}
-	}
-
-	/**
-	 * Process custom action order to get billet status.
-	 *
-	 * @since 	1.0.0
-	 * @param 	object 	$order
-	 * @return 	void
-	 */
-	public function process_billet_status( $order )
-	{
-		$code = $order->get_meta( "_triibo_payments_code" );
-
-		if ( $code[ "type" ] == "BILLET" && !is_null( $code[ "invoice" ] ) )
-		{
-			$response = $this->process_payment_status( $order->user_id, $code[ "gateway" ], $code[ "paymentId" ] );
-
-			if ( $response[ "success" ] && isset( $response[ "data" ] ) )
-			{
-				$payment_info = $response[ "data" ][ "paymentStatus" ];
-
-				if ( $payment_info[ "changed" ] && $payment_info[ "approved" ] )
-				{
-					$order->payment_complete();
-					$order->update_status( "processing", __( "Triibo_Payments: Pagamento aprovado", $this->id ) );
-				}
-				elseif ( $payment_info[ "changed" ] && !$payment_info[ "approved" ] )
-				{
-					$order->update_status( "failed", __( "Triibo_Payments: Pagamento malsucedido", $this->id ) );
-				}
-				else
-				{
-					$order->add_order_note( "Sem mudança de status no pagamento." );
-				}
-
-				$order->save();
-
-				$this->log( json_encode( $payment_info ) );
-			}
-		}
-	}
-
-	/**
-	 * Process custom action order box.
-	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$user_id
-	 * @param 	string 	$service
-	 * @param 	string 	$payment_id
-	 * @return 	void
-	 */
-	private function process_payment_status( $user_id, $service, $payment_id )
-	{
-		$token    = $this->api->validate_token( $user_id );
-		$response = $this->api->payment_status( $token, $service, $payment_id );
-
-		return $response;
 	}
 
 	/**
