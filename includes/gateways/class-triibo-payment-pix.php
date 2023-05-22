@@ -536,18 +536,21 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 		$code    = $order->get_meta( "_triibo_payments_code" );
 		$invoice = $code[ "invoice" ];
 
-		$data    = [
-			"type" => $code[ "type" ],
-			"link" => $invoice[ "qrCode"  ],
-			"code" => $invoice[ "pixCode" ],
-		];
+		if ( !empty( $invoice ) )
+		{
+			$data    = [
+				"type" => $code[ "type" ],
+				"link" => $invoice[ "qrCode"  ],
+				"code" => $invoice[ "pixCode" ],
+			];
 
-		wc_get_template(
-			"on-hold.php",
-			$data,
-			"",
-			Triibo_Payments::get_templates_path() . "emails/"
-		);
+			wc_get_template(
+				"on-hold.php",
+				$data,
+				"",
+				Triibo_Payments::get_templates_path() . "emails/"
+			);
+		}
 	}
 
 	/**
