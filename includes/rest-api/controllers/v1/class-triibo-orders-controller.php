@@ -104,8 +104,13 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 
 		$key = $request->get_header( "x-api-key" );
 
-		if ( $key !== "54723162306C6F6A7052646D4C6170693030" || $key !== "0303960716C4D6462507A6F6C60326132745" )
-			return new WP_REST_Response( [ "error" => "Unauthorized" ], 401 );
+		if ( $key !== "54723162306C6F6A7052646D4C6170693030" && $key !== "0303960716C4D6462507A6F6C60326132745" )
+		{
+			return new WP_REST_Response( [
+				"success" => false,
+				"message" => "Unauthorized",
+			], 401 );
+		}
 
 		$order_id = $request->get_param( "orderId"  );
 		$status   = $request->get_param( "status"   );
@@ -122,17 +127,25 @@ class Triibo_Orders_Controller extends WP_REST_Controller
                 $order->payment_complete();
                 $order->update_status( "processing" );
 
-                return;
+                return new WP_REST_Response( [
+					"success" => true,
+					"message" => "Order successfully updated, with status processing",
+				], 200 );
             }
 
             $this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
 
-            // TODO confirmar com Pedro, se 'cancelled' ou 'failed'
             $order->update_status( "failed" );
 
-            return;
+            return new WP_REST_Response( [
+				"success" => true,
+				"message" => "Order successfully updated, with status failed",
+			], 200 );
         }
 
-        return;
+        return new WP_REST_Response( [
+			"success" => false,
+			"message" => "Order not found",
+		], 404 );
 	}
 }
