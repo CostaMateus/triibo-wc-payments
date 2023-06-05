@@ -92,7 +92,7 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 		self::$instance = $this;
 
         $this->id                 = Triibo_Payments::DOMAIN . "_pix";
-        $this->icon               = apply_filters( "woocommerce_" . $this->id . "_icon", plugins_url( "assets/images/triibo-25-cor-completo.png", Triibo_Payments::FILE ) );
+        $this->icon               = apply_filters( "woocommerce_" . $this->id . "_icon", plugins_url( "assets/images/icon-pix.png", Triibo_Payments::FILE ) );
 
         $this->method_title       = __( "Triibo PIX",                                  $this->id );
         $this->method_description = __( "Pagamentos com PIX usando a Triibo Gateway.", $this->id );

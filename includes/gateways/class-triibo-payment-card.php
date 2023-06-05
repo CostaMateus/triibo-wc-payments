@@ -84,7 +84,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 		self::$instance = $this;
 
         $this->id                 = Triibo_Payments::DOMAIN . "_card";
-        $this->icon               = apply_filters( "woocommerce_" . $this->id . "_icon", plugins_url( "assets/images/triibo-25-cor-completo.png", Triibo_Payments::FILE ) );
+        $this->icon               = apply_filters( "woocommerce_" . $this->id . "_icon", plugins_url( "assets/images/icon-cc.png", Triibo_Payments::FILE ) );
 
         $this->method_title       = __( "Triibo Cartão de Crédito",                                  $this->id );
         $this->method_description = __( "Pagamentos com cartão de crédito usando a Triibo Gateway.", $this->id );
