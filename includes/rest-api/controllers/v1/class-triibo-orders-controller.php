@@ -126,6 +126,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 
                 $order->payment_complete();
                 $order->update_status( "processing" );
+				$order->save();
 
                 return new WP_REST_Response( [
 					"success" => true,
@@ -136,6 +137,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
             $this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
 
             $order->update_status( "failed" );
+			$order->save();
 
             return new WP_REST_Response( [
 				"success" => true,
