@@ -114,36 +114,36 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 
 		$order_id = $request->get_param( "orderId"  );
 		$status   = $request->get_param( "status"   );
-		$approved = $request->get_param( "approved" );
+		$approved = filter_var( $request->get_param( "approved" ), FILTER_VALIDATE_BOOLEAN );
 
 		$order    = wc_get_order( $order_id );
 
-        if ( $order )
-        {
-            if ( $approved )
-            {
-                $this->log->add( Triibo_Payments::DOMAIN, "INFO - finalize_order : ID " . $order_id . " : " . $status );
+		if ( $order )
+		{
+			if ( $approved )
+			{
+				$this->log->add( Triibo_Payments::DOMAIN, "INFO - finalize_order : ID " . $order_id . " : " . $status );
 
-                $order->payment_complete();
-                $order->update_status( "processing" );
+				$order->payment_complete();
+				$order->update_status( "processing" );
 				$order->save();
 
-                return new WP_REST_Response( [
+				return new WP_REST_Response( [
 					"success" => true,
 					"message" => "Order successfully updated, with status processing",
 				], 200 );
-            }
+			}
 
-            $this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
+			$this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
 
-            $order->update_status( "failed" );
+			$order->update_status( "failed" );
 			$order->save();
 
-            return new WP_REST_Response( [
+			return new WP_REST_Response( [
 				"success" => true,
 				"message" => "Order successfully updated, with status failed",
 			], 200 );
-        }
+		}
 
         return new WP_REST_Response( [
 			"success" => false,
