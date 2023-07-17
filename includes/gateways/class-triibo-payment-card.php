@@ -561,7 +561,6 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 		$order         = wc_get_order( $order_id );
         $user          = wp_get_current_user();
 		$user_ip       = $this->get_user_ip();
-		$triibo_id     = get_user_meta( $user->ID, "triiboId_phone", true );
 		$token         = $this->api->validate_token( $user->ID );
 
 		$cpf           = WC()->checkout()->get_value( $this->id . "-card-holder-cpf" );
