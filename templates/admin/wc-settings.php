@@ -14,7 +14,7 @@ if ( "yes" == $this->get_option( "enabled" ) )
 			! class_exists( "woocommerce_wpml" ) ) include dirname( __FILE__ ) . "/html-notice-currency-not-supported.php";
 
 	if ( $this->node->empty( "user" ) || $this->node->empty( "pass" ) )
-		include dirname( __FILE__ ) . "/missing-account-password.php";
+		include_once dirname( Triibo_Payments::FILE ) . "/templates/notices/missing-account-password.php";
 }
 
 ?>
