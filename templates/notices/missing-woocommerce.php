@@ -21,15 +21,15 @@ if ( function_exists( "get_plugins" ) )
 <div class="error" >
 	<p>
 		<strong>
-			<?php esc_html_e( "#Triibo_Payments", Triibo_Payments::DOMAIN ); ?>
+			<?php esc_html_e( "#Triibo_Payments", "triibo_payments" ); ?>
 		</strong>
-		<?php esc_html_e( "depende da última versão do 'WooCommerce' para funcionar!", Triibo_Payments::DOMAIN ); ?>
+		<?php esc_html_e( "depende da última versão do 'WooCommerce' para funcionar!", "triibo_payments" ); ?>
 	</p>
 
 	<?php if ( $is_installed && current_user_can( "install_plugins" ) ) : ?>
 		<p>
 			<a href="<?php echo esc_url( wp_nonce_url( self_admin_url( "plugins.php?action=activate&plugin=woocommerce/woocommerce.php&plugin_status=active" ), "activate-plugin_woocommerce/woocommerce.php" ) ); ?>" class="button button-primary" >
-				<?php esc_html_e( "Ative WooCommerce", Triibo_Payments::DOMAIN ); ?>
+				<?php esc_html_e( "Ative WooCommerce", "triibo_payments" ); ?>
 			</a>
 		</p>
 	<?php else :
@@ -37,7 +37,7 @@ if ( function_exists( "get_plugins" ) )
 	?>
 		<p>
 			<a href="<?php echo esc_url( $url ); ?>" class="button button-primary" >
-				<?php esc_html_e( "Instale WooCommerce", Triibo_Payments::DOMAIN ); ?>
+				<?php esc_html_e( "Instale WooCommerce", "triibo_payments" ); ?>
 			</a>
 		</p>
 	<?php endif; ?>
