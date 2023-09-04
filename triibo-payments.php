@@ -4,7 +4,7 @@
  * Description:          Meios de pagamento Triibo para WooCommerce. Dependências: Triibo API Services e WooCommerce.
  * Author:               Mateus Costa
  * Author URI:           https://costamateus.com.br/
- * Version:              1.0.1
+ * Version:              1.0.2
  * Text Domain:          triibo_payments
  * RequiresPHP:          7.4
  * RequiresWP:           5.9
@@ -12,7 +12,7 @@
  * WC tested up to:      6.3
  *
  * @package 			 Triibo_Payments
- * @version 			 1.0.1
+ * @version 			 1.0.2
  */
 defined( "ABSPATH" ) || exit;
 
@@ -28,7 +28,7 @@ class Triibo_Payments
 	 * @since 	1.0.0
 	 * @var 	string
 	 */
-	const VERSION = "1.0.1";
+	const VERSION = "1.0.2";
 
 	/**
 	 * Plugin domain.
