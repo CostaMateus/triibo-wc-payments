@@ -1,18 +1,19 @@
 <?php
 /**
- * Plugin Name:          #Triibo_Payments
- * Description:          Meios de pagamento Triibo para WooCommerce. Dependências: Triibo API Services e WooCommerce.
- * Author:               Mateus Costa
- * Author URI:           https://costamateus.com.br/
- * Version:              1.0.2
- * Text Domain:          triibo_payments
- * RequiresPHP:          7.4
- * RequiresWP:           5.9
- * WC requires at least: 5.8
- * WC tested up to:      6.3
+ * Plugin Name: 			#Triibo_Payments
+ * Plugin URI: 				https://triibo.com.br
+ * Description: 			Meios de pagamento Triibo para WooCommerce. Dependências: Triibo API Services e WooCommerce.
+ * Author: 					Mateus Costa
+ * Author URI: 				https://costamateus.com.br/
+ * Version: 				1.1.0
+ * Text Domain: 			triibo_payments
+ * RequiresPHP: 			7.4
+ * RequiresWP: 				5.9
+ * WC requires at least: 	5.8
+ * WC tested up to: 		6.3
  *
- * @package 			 Triibo_Payments
- * @version 			 1.0.2
+ * @package 	Triibo_Payments
+ * @version 	1.1.0
  */
 defined( "ABSPATH" ) || exit;
 
@@ -28,7 +29,7 @@ class Triibo_Payments
 	 * @since 	1.0.0
 	 * @var 	string
 	 */
-	const VERSION = "1.0.2";
+	const VERSION = "1.1.0";
 
 	/**
 	 * Plugin domain.
@@ -57,6 +58,7 @@ class Triibo_Payments
 	/**
 	 * Construct
 	 *
+	 * @since 	1.1.0 Add filter plugin_row_meta
 	 * @since 	1.0.0
 	 */
 	private function __construct()
@@ -87,6 +89,12 @@ class Triibo_Payments
 
 		add_filter( "plugin_action_links_" . plugin_basename( self::FILE ), [ $this, "plugin_action_links" ]        );
 		add_filter( "woocommerce_payment_gateways",                         [ $this, "register_gateways"   ], 99, 1 );
+
+		/**
+		 * @since 1.1.0
+		 */
+		add_filter( "plugin_row_meta",                                      [ $this, "plugin_row_meta"     ], 10, 3 );
+
 		add_action( "admin_menu",                                           [ $this, "add_submenu_page"    ], 11    );
 		add_action( "triibo_api_service_add_button",                        [ $this, "add_btn"             ], 11    );
 		add_action( "triibo_api_service_list_plugin_node",                  [ $this, "add_info_dependency" ],       );
@@ -188,6 +196,38 @@ class Triibo_Payments
 		$methods[] = "Triibo_Payment_Pix";
 
 		return $methods;
+	}
+
+	/**
+	 * Add link to changelog modal
+	 *
+	 * @since 	1.1.0
+	 * @param 	array 	$plugin_meta
+	 * @param 	string 	$plugin_file
+	 * @param 	array 	$plugin_data
+	 * @return 	array
+	 */
+	public function plugin_row_meta( $plugin_meta, $plugin_file, $plugin_data )
+	{
+		$path = path_join( WP_PLUGIN_DIR, $plugin_file );
+
+		if ( DIRECTORY_SEPARATOR == "\\" )
+			$path = str_replace( "/", "\\", $path );
+
+        if ( self::FILE === $path )
+		{
+            $url = plugins_url( "readme.txt", self::FILE );
+
+            $plugin_meta[] = sprintf(
+                "<a href='%s' class='thickbox open-plugin-details-modal' aria-label='%s' data-title='%s'>%s</a>",
+                add_query_arg( "TB_iframe", "true", $url ),
+                esc_attr( sprintf( __( "More information about %s" ), $plugin_data[ "Name" ] ) ),
+                esc_attr( $plugin_data[ "Name" ] ),
+                __( "Histórico de alterações" )
+            );
+        }
+
+        return $plugin_meta;
 	}
 
 	/**
