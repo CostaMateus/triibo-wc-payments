@@ -1,2 +1,9 @@
-# triibo-wc-payments
-Meios de pagamento Triibo para WooCommerce
+# Triibo Payments
+Meios de pagamento normais da Triibo para WooCommerce.
+- pix
+- boleto
+- cartão de crédito
+
+Provedores:
+- asaas
+- cielo
