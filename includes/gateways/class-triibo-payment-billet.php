@@ -504,9 +504,26 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 			"invoice"   => $resp_pay[ "data" ][ "paymentInfo" ][ "invoice" ]
 		] );
 
-		$note  = "Payment ID: {$resp_pay[ "data" ][ "paymentInfo" ][ "id" ]}\n";
-		$note .= "Gateway: " . $this->service;
+		$pay_id        = $resp_pay[ "data" ][ "paymentInfo" ][ "id"  ];
+		$note          = "Payment ID: {$pay_id}\n";
+
+		/**
+		 * Add the cielo TID code to the order note
+		 *
+		 * @since 	1.2.1
+		 */
+		if ( $this->service == "cielo" )
+		{
+			if ( isset( $resp_pay[ "data" ][ "paymentInfo" ][ "tid" ] ) )
+			{
+				$pay_tid  = $resp_pay[ "data" ][ "paymentInfo" ][ "tid" ];
+				$note    .= "TID: {$pay_tid}\n";
+			}
+		}
+
+		$note         .= "Gateway: " . $this->service;
 		$order->add_order_note( $note );
+
 		$order->update_status( "on-hold", __( "Triibo_Payments: Aguardando pagamento", $this->id ) );
 		$order->save();
 
