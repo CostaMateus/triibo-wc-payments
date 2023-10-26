@@ -13,7 +13,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Endpoint namespace.
 	 *
-	 * @since   1.0.0
+	 * @since 	1.0.0
 	 * @var 	string
 	 */
 	protected $namespace = "triibo-payments/v1";
@@ -21,7 +21,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Route base.
 	 *
-	 * @since   1.0.0
+	 * @since 	1.0.0
 	 * @var 	string
 	 */
 	protected $rest_base = "orders";
@@ -29,7 +29,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Stores the request.
 	 *
-	 * @since   1.0.0
+	 * @since 	1.0.0
 	 * @var 	array
 	 */
 	protected $request   = [];
@@ -45,7 +45,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Construct
 	 *
-	 * @since   1.0.0
+	 * @since 	1.0.0
 	 */
 	public function __construct()
     {
@@ -55,7 +55,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Register the routes for orders.
 	 *
-	 * @since   1.0.0
+	 * @since 	1.0.0
 	 * @return 	void
 	 */
 	public function register_routes()
@@ -77,7 +77,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Update order status
 	 *
-	 * @since   1.0.0
+	 * @since 	1.0.0
 	 * @param 	WP_REST_Request $request
 	 * @return 	null
 	 */
