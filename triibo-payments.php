@@ -7,11 +7,10 @@
  * Author URI: 				https://costamateus.com.br/
  * Version: 				1.3.0
  * Text Domain: 			triibo_payments
+ * Requires at least: 		6.4
  * Requires PHP: 			7.4
- * Requires at least: 		6.0
- * Tested up to: 			6.3
- * WC requires at least: 	6.5
- * WC tested up to: 		8.1
+ * WC requires at least: 	8.0
+ * WC tested up to: 		8.2
  *
  * @package 	Triibo_Payments
  * @version 	1.3.0
