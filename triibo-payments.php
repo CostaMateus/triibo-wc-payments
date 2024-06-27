@@ -5,7 +5,7 @@
  * Description: 			Meios de pagamento Triibo para WooCommerce. Dependências: Triibo API Services e WooCommerce.
  * Author: 					Mateus Costa
  * Author URI: 				https://costamateus.com.br/
- * Version: 				1.2.1
+ * Version: 				1.3.0
  * Text Domain: 			triibo_payments
  * Requires PHP: 			7.4
  * Requires at least: 		6.0
@@ -14,7 +14,7 @@
  * WC tested up to: 		8.1
  *
  * @package 	Triibo_Payments
- * @version 	1.2.1
+ * @version 	1.3.0
  */
 defined( "ABSPATH" ) || exit;
 
@@ -30,7 +30,7 @@ class Triibo_Payments
 	 * @since 	1.0.0
 	 * @var 	string
 	 */
-	const VERSION = "1.2.1";
+	const VERSION = "1.3.0";
 
 	/**
 	 * Plugin domain.
@@ -59,7 +59,8 @@ class Triibo_Payments
 	/**
 	 * Construct
 	 *
-	 * @since 	1.1.0 Add filter plugin_row_meta
+	 * @since 	1.3.0 	Added HPOS compatibility declaration
+	 * @since 	1.1.0 	Added plugin change history
 	 * @since 	1.0.0
 	 */
 	private function __construct()
@@ -88,17 +89,22 @@ class Triibo_Payments
 		require_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-card.php"   );
 		require_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-pix.php"    );
 
-		add_filter( "plugin_action_links_" . plugin_basename( self::FILE ), [ $this, "plugin_action_links" ]        );
-		add_filter( "woocommerce_payment_gateways",                         [ $this, "register_gateways"   ], 99, 1 );
+		add_filter( "plugin_action_links_" . plugin_basename( self::FILE ), [ $this, "plugin_action_links"      ]        );
+		add_filter( "woocommerce_payment_gateways",                         [ $this, "register_gateways"        ], 99, 1 );
 
 		/**
 		 * @since 1.1.0
 		 */
-		add_filter( "plugin_row_meta",                                      [ $this, "plugin_row_meta"     ], 10, 3 );
+		add_filter( "plugin_row_meta",                                      [ $this, "plugin_row_meta"          ], 10, 3 );
 
-		add_action( "admin_menu",                                           [ $this, "add_submenu_page"    ], 11    );
-		add_action( "triibo_api_service_add_button",                        [ $this, "add_btn"             ], 11    );
-		add_action( "triibo_api_service_list_plugin_node",                  [ $this, "add_info_dependency" ],       );
+		/**
+		 * @since 1.3.0
+		 */
+		add_action( "before_woocommerce_init",                              [ $this, "setup_hpos_compatibility" ]        );
+
+		add_action( "admin_menu",                                           [ $this, "add_submenu_page"         ], 11    );
+		add_action( "triibo_api_service_add_button",                        [ $this, "add_btn"                  ], 11    );
+		add_action( "triibo_api_service_list_plugin_node",                  [ $this, "add_info_dependency"      ],       );
 
 		// Order Box Actions
 		add_action( "woocommerce_order_actions",                                         [ $this, "add_order_box_action"   ] );
@@ -229,6 +235,27 @@ class Triibo_Payments
         }
 
         return $plugin_meta;
+	}
+
+	/**
+	 * Setup WooCommerce HPOS compatibility.
+	 *
+	 * @since 	1.3.0
+	 * @return 	void
+	 */
+	public function setup_hpos_compatibility() : void
+	{
+		if ( defined( "WC_VERSION" ) && version_compare( WC_VERSION, "7.1", "<" ) )
+			return;
+
+		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) )
+		{
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+				"custom_order_tables",
+				__FILE__,
+				true
+			);
+		}
 	}
 
 	/**

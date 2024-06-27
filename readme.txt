@@ -1,5 +1,9 @@
 == Changelog ==
 
+= 1.3.0 - 2024/06/27 =
+
+- Adicionada compatibilidade com WooCommerce HPOS
+
 = 1.2.1 - 2023/10/26 =
 
 - Adicionado código TID da Cielo nas notas do pedido
