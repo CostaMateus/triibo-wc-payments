@@ -118,36 +118,40 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 
 		$order    = wc_get_order( $order_id );
 
-		if ( $order )
+		$this->log->add( Triibo_Payments::DOMAIN, "INFO - get_order : ID {$order_id} : {$status}" );
+
+		if ( !$order )
 		{
-			if ( $approved )
-			{
-				$this->log->add( Triibo_Payments::DOMAIN, "INFO - finalize_order : ID " . $order_id . " : " . $status );
+			$this->log->add( Triibo_Payments::DOMAIN, "WARNING - not_found_order : ID {$order_id}" );
 
-				$order->payment_complete();
-				$order->update_status( "processing" );
-				$order->save();
+			return new WP_REST_Response( [
+				"success" => false,
+				"message" => "Order not found",
+			], 404 );
+		}
 
-				return new WP_REST_Response( [
-					"success" => true,
-					"message" => "Order successfully updated, with status processing",
-				], 200 );
-			}
+		if ( $approved )
+		{
+			$this->log->add( Triibo_Payments::DOMAIN, "INFO - finalize_order : ID " . $order_id . " : " . $status );
 
-			$this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
-
-			$order->update_status( "failed" );
+			$order->payment_complete();
+			$order->update_status( "processing" );
 			$order->save();
 
 			return new WP_REST_Response( [
 				"success" => true,
-				"message" => "Order successfully updated, with status failed",
+				"message" => "Order successfully updated, with status processing",
 			], 200 );
 		}
 
-        return new WP_REST_Response( [
-			"success" => false,
-			"message" => "Order not found",
-		], 404 );
+		$this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
+
+		$order->update_status( "failed" );
+		$order->save();
+
+		return new WP_REST_Response( [
+			"success" => true,
+			"message" => "Order successfully updated, with status failed",
+		], 200 );
 	}
 }
