@@ -95,43 +95,31 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 	 */
     public function delete_images( WP_REST_Request $request )
 	{
-        $images  = $request->get_param( "images" );
+        $posts   = $request->get_param( "posts" );
         $results = [];
 
-        foreach ( $images as $image )
+        foreach ( $posts as $post_id )
 		{
-            $path = ABSPATH . ltrim( $image, "/" );
+			$response = wp_delete_attachment( $post_id, true );
 
-            if ( file_exists( $path ) )
+			if ( !$response )
 			{
-                if ( unlink( $path ) )
-				{
-                    $results[] = [
-						"code"    => 200,
-						"image"   => $image,
-						"status"  => "success",
-						"message" => "Excluído com sucesso"
-					];
-				}
-                else
-				{
-                    $results[] = [
-						"code"    => 500,
-						"image"   => $image,
-						"status"  => "error",
-						"message" => "Falha ao excluir"
-					];
-				}
-            }
+				$results[] = [
+					"code"    => 500,
+					"post_id" => $post_id,
+					"status"  => "error",
+					"message" => "Falha ao excluir post"
+				];
+			}
 			else
 			{
-                $results[] = [
-					"code"    => 404,
-					"image"   => $image,
-					"status"  => "error",
-					"message" => "Arquivo não encontrado"
+				$results[] = [
+					"code"    => 200,
+					"post_id" => $post_id,
+					"status"  => "success",
+					"message" => "Excluído com sucesso"
 				];
-            }
+			}
         }
 
         return rest_ensure_response( $results );
