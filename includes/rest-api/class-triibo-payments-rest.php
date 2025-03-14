@@ -13,12 +13,14 @@ class Triibo_Payments_Rest
 	/**
 	 * Initialize the plugin public actions.
      *
+	 * @since   1.4.0   Added delete images class.
 	 * @since   1.0.0
 	 */
     public function __construct()
 	{
 		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-cards-controller.php";
 		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-orders-controller.php";
+		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-image-delete-controller.php";
 
         add_action( "rest_api_init", [ $this, "register_rest_routes" ] );
     }
@@ -44,6 +46,7 @@ class Triibo_Payments_Rest
     /**
      * Get API namespaces - new namespaces should be registered here.
      *
+	 * @since   1.4.0   Added delete images class.
 	 * @since   1.0.0
      * @return  array List of Namespaces and Main controller classes.
      */
@@ -55,6 +58,9 @@ class Triibo_Payments_Rest
                 "triibo-payments/v1" => [
                     "cards"  => "Triibo_Cards_Controller",
                     "orders" => "Triibo_Orders_Controller",
+                ],
+                "triibo/v1"          => [
+                    "delete-images" => "Triibo_Image_Delete_Controller",
                 ]
             ]
         );
