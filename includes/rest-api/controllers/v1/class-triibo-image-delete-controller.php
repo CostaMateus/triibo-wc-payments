@@ -58,10 +58,10 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 					"callback"            => [ $this, "delete_images"     ],
 					"permission_callback" => [ $this, "permissions_check" ],
 					"args"                => [
-						"images" => [
+						"posts" => [
 							"type"        => "array",
 							"required"    => true,
-							"description" => "Lista de caminhos relativos das imagens a serem excluídas",
+							"description" => "Lista de IDs das imagens a serem excluídas",
 							"items"       => [
 								"type" => "string"
 							]
