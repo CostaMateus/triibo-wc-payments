@@ -79,7 +79,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	 *
 	 * @since 	1.0.0
 	 * @param 	WP_REST_Request $request
-	 * @return 	null
+	 * @return 	WP_REST_Response
 	 */
 	public function update_order( $request )
 	{

@@ -77,7 +77,7 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 	 * @param 	WP_REST_Request 	$request
 	 * @return 	bool
 	 */
-	public function permissions_check( WP_REST_Request $request ) : bool
+	public function permissions_check( WP_REST_Request $request )
 	{
 		return in_array(
 			$request->get_header( "x-api-key" ),
@@ -93,7 +93,7 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 	 * @param 	WP_REST_Request 	$request
 	 * @return 	WP_REST_Response|WP_Error
 	 */
-    public function delete_images( WP_REST_Request $request ) : WP_REST_Response|WP_Error
+    public function delete_images( WP_REST_Request $request )
 	{
         $images  = $request->get_param( "images" );
         $results = [];

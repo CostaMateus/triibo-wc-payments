@@ -76,7 +76,7 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 	 *
 	 * @since 	1.0.0
 	 * @param 	WP_REST_Request $request
-	 * @return 	array
+	 * @return 	string
 	 */
 	public function get_brand( $request )
 	{
