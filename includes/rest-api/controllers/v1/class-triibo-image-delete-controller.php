@@ -105,25 +105,30 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
             if ( file_exists( $path ) )
 			{
                 if ( unlink( $path ) )
+				{
                     $results[] = [
-						"image"  => $image,
-						"code"   => 200,
-						"status" => "success"
+						"code"    => 200,
+						"image"   => $image,
+						"status"  => "success",
+						"message" => "Excluído com sucesso"
 					];
+				}
                 else
+				{
                     $results[] = [
+						"code"    => 500,
 						"image"   => $image,
 						"status"  => "error",
-						"code"    => 500,
 						"message" => "Falha ao excluir"
 					];
+				}
             }
 			else
 			{
                 $results[] = [
+					"code"    => 404,
 					"image"   => $image,
 					"status"  => "error",
-					"code"    => 404,
 					"message" => "Arquivo não encontrado"
 				];
             }
