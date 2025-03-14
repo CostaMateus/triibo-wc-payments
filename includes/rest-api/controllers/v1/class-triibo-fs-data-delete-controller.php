@@ -105,11 +105,13 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 
         foreach ( $posts as $post_id )
 		{
-			$response = match ( $type )
-			{
-				"attachment" => wp_delete_attachment( $post_id, true ),
-				"product"    => wc_delete_product   ( $post_id, true )
-			};
+			$response = false;
+
+			if ( $type === "product" )
+				$response = wc_delete_product( $post_id, true );
+
+			if ( $type === "attachment" )
+				$response = wp_delete_attachment( $post_id, true );
 
 			if ( !$response )
 			{
