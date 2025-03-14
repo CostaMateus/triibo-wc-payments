@@ -93,7 +93,7 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 	 * @param 	WP_REST_Request 	$request
 	 * @return 	WP_REST_Response|WP_Error
 	 */
-    public function delete_images( WP_REST_Request $request ) : mixed
+    public function delete_images( WP_REST_Request $request ) : WP_REST_Response|WP_Error
 	{
         $images  = $request->get_param( "images" );
         $results = [];
