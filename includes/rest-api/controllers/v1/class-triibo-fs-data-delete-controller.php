@@ -1,6 +1,6 @@
 <?php
 /**
- * Triibo Image Delete Controller class
+ * Triibo FS Data Delete Controller class
  *
  * @author      Mateus Costa <mateus@costamateus.com.br>
  * @package 	Triibo/Rest
@@ -8,7 +8,7 @@
  */
 defined( "ABSPATH" ) || exit;
 
-class Triibo_Image_Delete_Controller extends WP_REST_Controller
+class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 {
 	/**
 	 * Endpoint namespace.
@@ -24,7 +24,7 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 	 * @since 	1.4.0
 	 * @var 	string
 	 */
-	protected $rest_base = "delete-images";
+	protected $rest_base = "delete";
 
 	/**
 	 * Stores the request.
@@ -51,7 +51,7 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 	{
 		register_rest_route(
 			$this->namespace,
-			"/{$this->rest_base}",
+			"/{$this->rest_base}/fs-data",
 			[
 				[
 					"methods"             => WP_REST_Server::CREATABLE, // POST
@@ -61,10 +61,14 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
 						"posts" => [
 							"type"        => "array",
 							"required"    => true,
-							"description" => "Lista de IDs das imagens a serem excluídas",
-							"items"       => [
-								"type" => "string"
-							]
+							"description" => "Lista de post_id a serem excluídos",
+							"items"       => [ "type" => "string" ]
+						],
+						"type" => [
+							"type"        => "string",
+							"required"    => true,
+							"enum"        => [ "attachment", "product" ],
+							"description" => "Tipo do post (attachment ou product) que será excluído"
 						]
 					]
 				]
@@ -96,28 +100,29 @@ class Triibo_Image_Delete_Controller extends WP_REST_Controller
     public function delete_images( WP_REST_Request $request )
 	{
         $posts   = $request->get_param( "posts" );
+        $type    = $request->get_param( "type"  );
         $results = [];
 
         foreach ( $posts as $post_id )
 		{
-			$response = wp_delete_attachment( $post_id, true );
+			$response = match ( $type )
+			{
+				"attachment" => wp_delete_attachment( $post_id, true ),
+				"product"    => wc_delete_product   ( $post_id, true )
+			};
 
 			if ( !$response )
 			{
 				$results[] = [
-					"code"    => 500,
 					"post_id" => $post_id,
 					"status"  => "error",
-					"message" => "Falha ao excluir post"
 				];
 			}
 			else
 			{
 				$results[] = [
-					"code"    => 200,
 					"post_id" => $post_id,
 					"status"  => "success",
-					"message" => "Excluído com sucesso"
 				];
 			}
         }
