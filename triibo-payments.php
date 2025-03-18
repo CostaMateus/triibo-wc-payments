@@ -5,7 +5,7 @@
  * Description: 			Meios de pagamento Triibo para WooCommerce. Dependências: Triibo API Services e WooCommerce.
  * Author: 					Mateus Costa
  * Author URI: 				https://costamateus.com.br/
- * Version: 				1.4.0
+ * Version: 				1.4.1
  * Text Domain: 			triibo_payments
  * Requires at least: 		6.4
  * Requires PHP: 			7.4
@@ -13,7 +13,7 @@
  * WC tested up to: 		8.2
  *
  * @package 	Triibo_Payments
- * @version 	1.4.0
+ * @version 	1.4.1
  */
 defined( "ABSPATH" ) || exit;
 
@@ -29,7 +29,7 @@ class Triibo_Payments
 	 * @since 	1.0.0
 	 * @var 	string
 	 */
-	const VERSION = "1.4.0";
+	const VERSION = "1.4.1";
 
 	/**
 	 * Plugin domain.
@@ -315,6 +315,7 @@ class Triibo_Payments
 	/**
 	 * Add custom action to order box.
 	 *
+	 * @since 	1.4.1 	Validating if the $theorder has the $code.
 	 * @since 	1.0.0
 	 * @param 	array 	$actions
 	 * @return 	array
@@ -333,24 +334,24 @@ class Triibo_Payments
 
 		$code   = $theorder->get_meta( "_triibo_payments_code" );
 
-		if ( $code )
+		if ( !$code )
+			return $actions;
+
+		if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( "on-hold" ) )
 		{
-			if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( "on-hold" ) )
-			{
-				if ( $method == $billet->get_id() )
-					$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet->get_id() );
+			if ( $method == $billet->get_id() )
+				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet->get_id() );
 
-				if ( $method == $pix->get_id() )
-					$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix->get_id() );
-			}
-			elseif ( $theorder->has_status( "on-hold" ) )
-			{
-				if ( $method == $billet->get_id() )
-					$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet->get_id() );
+			if ( $method == $pix->get_id() )
+				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix->get_id() );
+		}
+		elseif ( $theorder->has_status( "on-hold" ) )
+		{
+			if ( $method == $billet->get_id() )
+				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet->get_id() );
 
-				if ( $method == $pix->get_id() )
-					$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix->get_id() );
-			}
+			if ( $method == $pix->get_id() )
+				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix->get_id() );
 		}
 
 		return $actions;
@@ -359,6 +360,7 @@ class Triibo_Payments
 	/**
 	 * Process custom action order to recover billet data/status.
 	 *
+	 * @since 	1.4.1 	Validating if the $order has the $code.
 	 * @since 	1.0.0
 	 * @param 	object 	$order
 	 * @return 	void
@@ -366,6 +368,9 @@ class Triibo_Payments
 	public function process_recover_status( $order )
 	{
 		$code     = $order->get_meta( "_triibo_payments_code" );
+
+		if ( !$code )
+			return;
 
 		$id       = self::DOMAIN . ( ( $code[ "type" ] == "BILLET" ) ? "_billet" : "_pix" );
 		$method   = ( $code[ "type" ] == "BILLET" ) ? Triibo_Payment_Billet::get_instance() : Triibo_Payment_Pix::get_instance();

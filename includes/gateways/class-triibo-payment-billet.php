@@ -542,6 +542,7 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Add content to the WC emails.
 	 *
+	 * @since 	1.4.1 	Validating if the $order has the $code.
 	 * @since 	1.0.0
 	 * @param 	object 	$order
 	 * @return 	void
@@ -550,26 +551,27 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	{
 		if ( $order->get_payment_method() != $this->id ) return;
 
-		$code    = $order->get_meta( "_triibo_payments_code" );
-		$invoice = $code[ "invoice" ];
+		$code = $order->get_meta( "_triibo_payments_code" );
 
-		$data    = [
-			"type" => $code[ "type" ],
-			"link" => $invoice[ "url"           ],
-			"code" => $invoice[ "digitableLine" ],
-		];
-
-		wc_get_template(
-			"on-hold.php",
-			$data,
-			"",
-			Triibo_Payments::get_templates_path() . "emails/"
-		);
+		if ( $code && !empty( $code[ "invoice" ] ) )
+		{
+			wc_get_template(
+				"on-hold.php",
+				[
+					"type" => $code[ "type"    ],
+					"link" => $code[ "invoice" ][ "url"           ],
+					"code" => $code[ "invoice" ][ "digitableLine" ],
+				],
+				"",
+				Triibo_Payments::get_templates_path() . "emails/"
+			);
+		}
 	}
 
 	/**
 	 * Thank You page message.
 	 *
+	 * @since 	1.4.1 	Validating if the $order has the $code.
 	 * @since 	1.0.0
 	 * @param 	int 	$order_id
 	 * @return 	void
@@ -580,14 +582,14 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 
 		if ( $order->get_payment_method() != $this->id ) return;
 
-		$code  = $order->get_meta( "_triibo_payments_code" );
-
-		$this->render_code( $code[ "invoice" ] );
+		if ( $code = $order->get_meta( "_triibo_payments_code" ) )
+			$this->render_code( $code[ "invoice" ] );
 	}
 
 	/**
 	 * Order Page message
 	 *
+	 * @since 	1.4.1 	Validating if the $order has the $code.
 	 * @since 	1.0.0
 	 * @param 	object 	$order
 	 * @return 	void
@@ -596,9 +598,8 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	{
 		if ( $order->get_payment_method() != $this->id ) return;
 
-		$code = $order->get_meta( "_triibo_payments_code" );
-
-		$this->render_code( $code[ "invoice" ] );
+		if ( $code = $order->get_meta( "_triibo_payments_code" ) )
+			$this->render_code( $code[ "invoice" ] );
 	}
 
 	/**

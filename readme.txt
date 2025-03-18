@@ -1,5 +1,13 @@
 == Changelog ==
 
+= 1.4.1 - 2025/03/18 =
+
+- Adicionado verificação, antes de algumas ações, se os pedidos tem a meta_data '_triibo_payments_code'.
+
+= 1.4.0 - 2025/03/14 =
+
+- Adicionado API para apagar post_type 'attachment' e 'product'.
+
 = 1.3.0 - 2024/06/27 =
 
 - Adicionada compatibilidade com WooCommerce HPOS

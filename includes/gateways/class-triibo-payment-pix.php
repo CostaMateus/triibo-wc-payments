@@ -550,20 +550,17 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 	{
 		if ( $order->get_payment_method() != $this->id ) return;
 
-		$code    = $order->get_meta( "_triibo_payments_code" );
-		$invoice = $code[ "invoice" ];
+		$code = $order->get_meta( "_triibo_payments_code" );
 
-		if ( !empty( $invoice ) )
+		if ( $code && !empty( $code[ "invoice" ] ) )
 		{
-			$data    = [
-				"type" => $code[ "type" ],
-				"link" => $invoice[ "qrCode"  ],
-				"code" => $invoice[ "pixCode" ],
-			];
-
 			wc_get_template(
 				"on-hold.php",
-				$data,
+				[
+					"type" => $code[ "type"    ],
+					"link" => $code[ "invoice" ][ "qrCode"  ],
+					"code" => $code[ "invoice" ][ "pixCode" ],
+				],
 				"",
 				Triibo_Payments::get_templates_path() . "emails/"
 			);
@@ -583,9 +580,8 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 
 		if ( $order->get_payment_method() != $this->id ) return;
 
-		$code  = $order->get_meta( "_triibo_payments_code" );
-
-		$this->render_code( $code[ "invoice" ] );
+		if ( $code = $order->get_meta( "_triibo_payments_code" ) )
+			$this->render_code( $code[ "invoice" ] );
 	}
 
 	/**
@@ -599,9 +595,8 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 	{
 		if ( $order->get_payment_method() != $this->id ) return;
 
-		$code = $order->get_meta( "_triibo_payments_code" );
-
-		$this->render_code( $code[ "invoice" ] );
+		if ( $code = $order->get_meta( "_triibo_payments_code" ) )
+			$this->render_code( $code[ "invoice" ] );
 	}
 
 	/**
