@@ -328,25 +328,29 @@ class Triibo_Payments
 
 		$method = $theorder->get_payment_method();
 
-		if ( $method != $billet->get_id() && $method != $pix->get_id() ) return $actions;
+		if ( $method != $billet->get_id() && $method != $pix->get_id() )
+			return $actions;
 
 		$code   = $theorder->get_meta( "_triibo_payments_code" );
 
-		if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( "on-hold" ) )
+		if ( $code )
 		{
-			if ( $method == $billet->get_id() )
-				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet->get_id() );
+			if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( "on-hold" ) )
+			{
+				if ( $method == $billet->get_id() )
+					$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet->get_id() );
 
-			if ( $method == $pix->get_id() )
-				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix->get_id() );
-		}
-		elseif ( $theorder->has_status( "on-hold" ) )
-		{
-			if ( $method == $billet->get_id() )
-				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet->get_id() );
+				if ( $method == $pix->get_id() )
+					$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix->get_id() );
+			}
+			elseif ( $theorder->has_status( "on-hold" ) )
+			{
+				if ( $method == $billet->get_id() )
+					$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet->get_id() );
 
-			if ( $method == $pix->get_id() )
-				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix->get_id() );
+				if ( $method == $pix->get_id() )
+					$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix->get_id() );
+			}
 		}
 
 		return $actions;
