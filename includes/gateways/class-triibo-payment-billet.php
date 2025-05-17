@@ -13,79 +13,88 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Instance of this class.
 	 *
-	 * @since 	1.0.0
-	 * @var 	object
+	 * @since 1.0.0
+	 *
+	 * @var object
 	 */
 	protected static $instance = null;
 
 	/**
 	 * Payment gateway (ex Cielo).
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	protected $service         = null;
+	protected $service = null;
 
 	/**
-	 * Message of checkout page
+	 * Message of checkout page.
 	 *
-	 * @var 	string
-	 * @since 	1.0.0
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	protected $message_pre     = "";
+	protected $message_pre = "";
 
 	/**
-	 * Message of thank_you and user order page
+	 * Message of thank_you and user order page.
 	 *
-	 * @var 	string
-	 * @since 	1.0.0
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	protected $message_pos     = "";
+	protected $message_pos = "";
 
 	/**
-	 * Billet expiration date
+	 * Billet expiration date.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	protected $due_date        = null;
+	protected $due_date = null;
 
 	/**
-	 * Instance of Api Node
+	 * Instance of Api Node.
 	 *
-	 * @since 	1.0.0
-	 * @var 	Triibo_Api_Node
+	 * @since 1.0.0
+	 *
+	 * @var Triibo_Api_Node
 	 */
-	protected $node            = null;
+	protected $node = null;
 
 	/**
-	 * Instance of Triibo_Payment_Api
+	 * Instance of Triibo_Payment_Api.
 	 *
-	 * @since 	1.0.0
-	 * @var 	Triibo_Payment_Api
+	 * @since 1.0.0
+	 *
+	 * @var Triibo_Payment_Api
 	 */
-	protected $api             = null;
+	protected $api = null;
 
 	/**
-	 * Debug
+	 * Debug.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	protected $debug           = null;
+	protected $debug = null;
 
 	/**
-	 * Logger
+	 * Logger.
 	 *
-	 * @since 	1.0.0
-	 * @var 	wc_get_logger|WC_Logger|null
+	 * @since 1.0.0
+	 *
+	 * @var wc_get_logger|WC_Logger|null
 	 */
-	protected $log             = null;
+	protected $log = null;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 *
-	 * @since 	1.0.0
+	 * @since 1.0.0
 	 */
 	public function __construct()
 	{
@@ -118,7 +127,8 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
         $this->debug              = $this->get_option( "debug"         );
 
         // Active logs.
-        if ( $this->debug == "yes" ) $this->log = ( function_exists( "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
+        if ( $this->debug == "yes" )
+			$this->log = ( function_exists( "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
 
         $this->node = new Triibo_Api_Node();
         $this->api  = new Triibo_Payments_Api( $this, $this->node );
@@ -127,81 +137,89 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	}
 
 	/**
-	 * Get id
+	 * Get id.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	public function get_id()
+	public function get_id() : string
 	{
 		return $this->id;
 	}
 
 	/**
-	 * Get service
+	 * Get service.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	public function get_service()
+	public function get_service() : string
 	{
 		return $this->service;
 	}
 
 	/**
-	 * Get node
+	 * Get node.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return Triibo_Api_Node
 	 */
-	public function get_node()
+	public function get_node() : Triibo_Api_Node
 	{
 		return $this->node;
 	}
 
 	/**
-	 * Get api
+	 * Get api.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return Triibo_Payment_Api
 	 */
-	public function get_api()
+	public function get_api() : Triibo_Payment_Api
 	{
 		return $this->api;
 	}
 
 	/**
-	 * Get debug
+	 * Get debug.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	public function get_debug()
+	public function get_debug() : string
 	{
 		return $this->debug;
 	}
 
 	/**
-	 * Get log
+	 * Get log.
 	 *
-	 * @since 	1.0.0
-	 * @return 	wc_get_logger|WC_Logger
+	 * @since 1.0.0
+	 *
+	 * @return wc_get_logger|WC_Logger
 	 */
-	public function get_log()
+	public function get_log() : wc_get_logger|WC_Logger
 	{
 		return $this->log;
 	}
 
 	/**
-	 * Return an instance of this class
+	 * Return an instance of this class.
 	 *
-	 * @since 	1.0.0
-	 * @return 	object A single instance of this class.
+	 * @since 1.0.0
+	 *
+	 * @return self 	A single instance of this class
 	 */
-	public static function get_instance()
+	public static function get_instance() : self
 	{
 		// If the single instance hasn't been set, set it now.
-		if ( null === self::$instance ) self::$instance = new self;
+		if ( null === self::$instance )
+			self::$instance = new self;
 
 		return self::$instance;
 	}
@@ -209,10 +227,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Get log.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	protected function get_log_view()
+	protected function get_log_view() : string
 	{
 		$date      = date( "Y-m-d" );
 		$esc_attr  = esc_attr( $this->id );
@@ -227,10 +246,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Get log.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	protected function get_global_config()
+	protected function get_global_config() : string
 	{
 		$triibo = Triibo_Api_Services::get_name( true );
         $url    = esc_url( admin_url( "admin.php?page={$triibo}" ) );
@@ -242,10 +262,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Returns a bool that indicates if currency is amongst the supported ones.
 	 *
-	 * @since 	1.0.0
-	 * @return 	bool
+	 * @since 1.0.0
+	 *
+	 * @return bool
 	 */
-	public function using_supported_currency()
+	public function using_supported_currency() : bool
 	{
 		return "BRL" === get_woocommerce_currency();
 	}
@@ -255,9 +276,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	 * It's called automatically by WooCommerce before allowing
 	 * customers to use the gateway for payment.
 	 *
+	 * @since 1.0.0
+	 *
 	 * @return bool
 	 */
-	public function is_available()
+	public function is_available() : bool
 	{
 		$available = $this->get_option( "enabled" ) === "yes" &&
 					 $this->node->status() && $this->using_supported_currency();
@@ -271,10 +294,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Initialise Gateway Settings Form Fields.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function init_form_fields()
+	public function init_form_fields() : void
 	{
 		$this->form_fields = [
 
@@ -354,10 +378,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Initialise Gateway Actions and Filters.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function init_actions_filters()
+	public function init_actions_filters() : void
 	{
 		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
 		add_action( "woocommerce_thankyou_"                        . $this->id, [ $this, "thankyou_page"         ] );
@@ -370,10 +395,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Admin page.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function admin_options()
+	public function admin_options() : void
 	{
 		$suffix  = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
 		$js_path = "assets/js/admin/script{$suffix}.js";
@@ -386,10 +412,11 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Payment Fields Hook.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function payment_fields()
+	public function payment_fields() : void
 	{
 		if (
 			( class_exists( "WC_Subscriptions_Cart"                   ) && WC_Subscriptions_Cart::cart_contains_subscription() )
@@ -414,11 +441,13 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	}
 
 	/**
-	 * Get User IP
+	 * Get User IP.
+	 *
+	 * @since 1.0.0
 	 *
 	 * @return string
 	 */
-	public function get_user_ip()
+	public function get_user_ip() : string
 	{
 		if ( !empty( $_SERVER[ "HTTP_CLIENT_IP" ] ) )
 		{
@@ -437,14 +466,16 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	}
 
 	/**
-	 * Process the payment
-	 * Function called by WooCommerce to process the payment
+	 * Process the payment.
+	 * Function called by WooCommerce to process the payment.
 	 *
-	 * @since 	1.0.0
-	 * @param  	int $order_id
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param int 	$order_id
+	 *
+	 * @return array
 	 */
-	public function process_payment( $order_id )
+	public function process_payment( $order_id ) : array
 	{
 		$notice      = "<b>" . $this->title . "</b>:";
 
@@ -542,12 +573,14 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Add content to the WC emails.
 	 *
-	 * @since 	1.4.1 	Validating if the $order has the $code.
-	 * @since 	1.0.0
-	 * @param 	object 	$order
-	 * @return 	void
+	 * @since 1.4.1 	Validating if the $order has the $code
+	 * @since 1.0.0
+	 *
+	 * @param object 	$order
+	 *
+	 * @return void
 	 */
-	public function email_instructions( $order )
+	public function email_instructions( object $order ) : void
 	{
 		if ( $order->get_payment_method() != $this->id ) return;
 
@@ -571,12 +604,14 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	/**
 	 * Thank You page message.
 	 *
-	 * @since 	1.4.1 	Validating if the $order has the $code.
-	 * @since 	1.0.0
-	 * @param 	int 	$order_id
-	 * @return 	void
+	 * @since 1.4.1 	Validating if the $order has the $code
+	 * @since 1.0.0
+	 *
+	 * @param int 		$order_id
+	 *
+	 * @return void
 	 */
-	public function thankyou_page( $order_id )
+	public function thankyou_page( int $order_id ) : void
 	{
 		$order = wc_get_order( $order_id );
 
@@ -587,14 +622,16 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	}
 
 	/**
-	 * Order Page message
+	 * Order Page message.
 	 *
-	 * @since 	1.4.1 	Validating if the $order has the $code.
-	 * @since 	1.0.0
-	 * @param 	object 	$order
-	 * @return 	void
+	 * @since 1.4.1 	Validating if the $order has the $code
+	 * @since 1.0.0
+	 *
+	 * @param object 	$order
+	 *
+	 * @return void
 	 */
-	public function order_page( $order )
+	public function order_page( object $order ) : void
 	{
 		if ( $order->get_payment_method() != $this->id ) return;
 
@@ -603,78 +640,75 @@ class Triibo_Payment_Billet extends WC_Payment_Gateway
 	}
 
 	/**
-	 * Render billet code on thnak_you/order page
+	 * Render billet code on thank_you/order page.
 	 *
-	 * @since 	1.0.0
-	 * @param 	array 	$invoice
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @param array 	$invoice
+	 *
+	 * @return void
 	 */
-	private function render_code( $invoice )
+	private function render_code( array $invoice ) : void
 	{
-		if ( !empty( $invoice ) )
-		{
-			$link = $invoice[ "url"           ];
-			$code = $invoice[ "digitableLine" ];
+		if ( empty( $invoice ) )
+			return;
 
-			?>
-			<div class="tpb-billet-container" style="text-align: center;margin: 20px 0" >
-				<div class="tpb-billet-instructions" >
-					<?php echo $this->message_pos; ?>
-				</div>
-				<input type="hidden" value="<?php echo $code; ?>" id="copiar" >
+		$link = $invoice[ "url"           ];
+		$code = $invoice[ "digitableLine" ];
 
-				<a class="tpb-billet-p button tpb-billet-button-copy-code" style="margin:1em auto;" href="<?php echo $link; ?>" target="_blank" >Acessar boleto</a>
-
-				<p class="tpb-billet-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" >Linha digitável do boleto</p>
-				<p class="tpb-billet-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" ><?php echo $code; ?></p>
-
-				<button class="button tpb-billet-button-copy-code" style="margin:1em auto;" onclick="copyCode()" >
-					<?php echo __( "Copiar o código acima", $this->id ); ?>
-				</button>
-				<div class="tpb-billet-response-output inactive" style="margin:1em .5em; padding:.2em 1em; border:2px solid #46b450; display:none;" aria-hidden="true" >
-					<?php echo __( "Código copiado para a área de transferência.", $this->id ); ?>
-				</div>
+		?>
+		<div class="tpb-billet-container" style="text-align: center;margin: 20px 0" >
+			<div class="tpb-billet-instructions" >
+				<?php echo $this->message_pos; ?>
 			</div>
-			<script>
-				function copyCode()
-				{
-					let copyText = document.getElementById( "copiar" );
-					copyText.type = "text";
-					copyText.select();
-					copyText.setSelectionRange( 0, 99999 );
-					document.execCommand( "copy" );
-					copyText.type = "hidden";
+			<input type="hidden" value="<?php echo $code; ?>" id="copiar" >
 
-					if ( jQuery( "div.tpb-billet-response-output" ) )
-						jQuery( "div.tpb-billet-response-output" ).show();
-					else
-						alert( "Código copiado para a área de transferência." );
+			<a class="tpb-billet-p button tpb-billet-button-copy-code" style="margin:1em auto;" href="<?php echo $link; ?>" target="_blank" >Acessar boleto</a>
 
-					return false;
-				}
-			</script>
-			<?php
-		}
+			<p class="tpb-billet-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" >Linha digitável do boleto</p>
+			<p class="tpb-billet-p" style="font-size:14px; margin:.5em 0; word-break:break-all;" ><?php echo $code; ?></p>
+
+			<button class="button tpb-billet-button-copy-code" style="margin:1em auto;" onclick="copyCode()" >
+				<?php echo __( "Copiar o código acima", $this->id ); ?>
+			</button>
+			<div class="tpb-billet-response-output inactive" style="margin:1em .5em; padding:.2em 1em; border:2px solid #46b450; display:none;" aria-hidden="true" >
+				<?php echo __( "Código copiado para a área de transferência.", $this->id ); ?>
+			</div>
+		</div>
+		<script>
+			function copyCode()
+			{
+				let copyText = document.getElementById( "copiar" );
+				copyText.type = "text";
+				copyText.select();
+				copyText.setSelectionRange( 0, 99999 );
+				document.execCommand( "copy" );
+				copyText.type = "hidden";
+
+				if ( jQuery( "div.tpb-billet-response-output" ) )
+					jQuery( "div.tpb-billet-response-output" ).show();
+				else
+					alert( "Código copiado para a área de transferência." );
+
+				return false;
+			}
+		</script>
+		<?php
 	}
 
 	/**
-	 * Register log
+	 * Register log.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$message
-	 * @param 	boolean $is_error
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @param string 	$message
+	 * @param boolean 	$is_error
+	 *
+	 * @return void
 	 */
-	public function log( $message, $is_error = false )
+	public function log( string $message, bool $is_error = false ) : void
 	{
-		if ( $this->debug == "yes" )
-		{
+		if ( $is_error || $this->debug == "yes" )
 			$this->log->add( $this->id, $message );
-		}
-		else if ( $is_error )
-		{
-			$this->log->add( $this->id, $message );
-		}
 	}
-
 }

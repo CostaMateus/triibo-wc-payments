@@ -13,71 +13,79 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Instance of this class.
 	 *
-	 * @since 	1.0.0
-	 * @var 	object
+	 * @since 1.0.0
+	 *
+	 * @var object
 	 */
-	protected static $instance  = null;
+	protected static $instance = null;
 
 	/**
 	 * Payment gateway (ex Cielo).
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	protected $service          = null;
+	protected $service = null;
 
 	/**
 	 * Type of payment in installments, in cash or in installments.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
 	protected $installment_type = null;
 
 	/**
 	 * Number of installments.
 	 *
-	 * @since 	1.0.0
-	 * @var 	integer
+	 * @since 1.0.0
+	 *
+	 * @var integer
 	 */
-	protected $installments     = null;
+	protected $installments = null;
 
 	/**
-	 * Instance of Api Node
+	 * Instance of Api Node.
 	 *
-	 * @since 	1.0.0
-	 * @var 	Triibo_Api_Node
+	 * @since 1.0.0
+	 *
+	 * @var Triibo_Api_Node
 	 */
-	protected $node             = null;
+	protected $node = null;
 
 	/**
-	 * Instance of Triibo_Payment_Api
+	 * Instance of Triibo_Payment_Api.
 	 *
-	 * @since 	1.0.0
-	 * @var 	Triibo_Payment_Api
+	 * @since 1.0.0
+	 *
+	 * @var Triibo_Payment_Api
 	 */
-	protected $api              = null;
+	protected $api = null;
 
 	/**
-	 * Debug
+	 * Debug.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	protected $debug            = null;
+	protected $debug = null;
 
 	/**
-	 * Logger
+	 * Logger.
 	 *
-	 * @since 	1.0.0
-	 * @var 	wc_get_logger|WC_Logger|null
+	 * @since 1.0.0
+	 *
+	 * @var wc_get_logger|WC_Logger|null
 	 */
-	protected $log              = null;
+	protected $log = null;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 *
-	 * @since 	1.0.0
+	 * @since 1.0.0
 	 */
 	public function __construct()
 	{
@@ -119,81 +127,89 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	}
 
 	/**
-	 * Get id
+	 * Get id.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	public function get_id()
+	public function get_id() : string
 	{
 		return $this->id;
 	}
 
 	/**
-	 * Get service
+	 * Get service.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	public function get_service()
+	public function get_service() : string
 	{
 		return $this->service;
 	}
 
 	/**
-	 * Get node
+	 * Get node.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return Triibo_Api_Node
 	 */
-	public function get_node()
+	public function get_node() : Triibo_Api_Node
 	{
 		return $this->node;
 	}
 
 	/**
-	 * Get api
+	 * Get api.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return Triibo_Payment_Api
 	 */
-	public function get_api()
+	public function get_api() : Triibo_Payment_Api
 	{
 		return $this->api;
 	}
 
 	/**
-	 * Get debug
+	 * Get debug.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	public function get_debug()
+	public function get_debug() : string
 	{
 		return $this->debug;
 	}
 
 	/**
-	 * Get log
+	 * Get log.
 	 *
-	 * @since 	1.0.0
-	 * @return 	wc_get_logger|WC_Logger
+	 * @since 1.0.0
+	 *
+	 * @return wc_get_logger|WC_Logger
 	 */
-	public function get_log()
+	public function get_log() : wc_get_logger|WC_Logger
 	{
 		return $this->log;
 	}
 
 	/**
-	 * Return an instance of this class
+	 * Return an instance of this class.
 	 *
-	 * @since 	1.0.0
-	 * @return 	object A single instance of this class.
+	 * @since 1.0.0
+	 *
+	 * @return self 	A single instance of this class
 	 */
-	public static function get_instance()
+	public static function get_instance() : self
 	{
 		// If the single instance hasn't been set, set it now.
-		if ( null === self::$instance ) self::$instance = new self;
+		if ( null === self::$instance )
+			self::$instance = new self;
 
 		return self::$instance;
 	}
@@ -201,10 +217,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Get log.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	protected function get_log_view()
+	protected function get_log_view() : string
 	{
 		$date      = date( "Y-m-d" );
 		$esc_attr  = esc_attr( $this->id );
@@ -219,10 +236,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Get log.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	protected function get_global_config()
+	protected function get_global_config() : string
 	{
 		$triibo = Triibo_Api_Services::get_name( true );
         $url    = esc_url( admin_url( "admin.php?page={$triibo}" ) );
@@ -234,10 +252,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Returns a bool that indicates if currency is amongst the supported ones.
 	 *
-	 * @since 	1.0.0
-	 * @return 	bool
+	 * @since 1.0.0
+	 *
+	 * @return bool
 	 */
-	public function using_supported_currency()
+	public function using_supported_currency() : bool
 	{
 		return "BRL" === get_woocommerce_currency();
 	}
@@ -247,9 +266,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 * It's called automatically by WooCommerce before allowing
 	 * customers to use the gateway for payment.
 	 *
+	 * @since 1.0.0
+	 *
 	 * @return bool
 	 */
-	public function is_available()
+	public function is_available() : bool
 	{
 		$available = $this->get_option( "enabled" ) === "yes" &&
 					 $this->node->status() && $this->using_supported_currency();
@@ -263,10 +284,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Initialise Gateway Settings Form Fields.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function init_form_fields()
+	public function init_form_fields() : void
 	{
 		$this->form_fields = [
 
@@ -355,10 +377,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Initialise Gateway Actions and Filters.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function init_actions_filters()
+	public function init_actions_filters() : void
 	{
 		add_action( "wp_enqueue_scripts",                                       [ $this, "checkout_scripts"      ] );
 		add_action( "woocommerce_update_options_payment_gateways_" . $this->id, [ $this, "process_admin_options" ] );
@@ -369,10 +392,11 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Admin page.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function admin_options()
+	public function admin_options() : void
 	{
 		$suffix  = defined( "SCRIPT_DEBUG" ) && SCRIPT_DEBUG ? "" : ".min";
 		$js_path = "assets/js/admin/script{$suffix}.js";
@@ -387,7 +411,7 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	 *
 	 * @return void
 	 */
-	public function checkout_scripts()
+	public function checkout_scripts() : void
 	{
 		$load_scripts = false;
 
@@ -449,55 +473,61 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	/**
 	 * Checkout form fields start.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @param string $id
+	 *
+	 * @return void
 	 */
-	public function form_fields_start( $id )
+	public function form_fields_start( string $id ) : void
 	{
-		if ( $id == $this->id )
-		{
-			$id = esc_attr( $this->id );
+		if ( $id != $this->id )
+			return;
 
-			echo "<p class='form-row form-row-wide' >
-				<label for='{$id}-card-holder-name' >" . esc_html__( "Nome do titular", $this->id ) . "&nbsp;<span class='required' >*</span></label>
-				<input id='{$id}-card-holder-name' class='input-text' type='text' placeholder='" . esc_attr__( "Informe o nome do titular", $this->id ) . "' " . $this->field_name( "card-holder-name" ) . " />
-			</p>
-			<p class='form-row form-row-wide' >
-				<label for='{$id}-card-holder-cpf' >" . esc_html__( "CPF do titular", $this->id ) . "&nbsp;<span class='required'>*</span></label>
-				<input id='{$id}-card-holder-cpf' class='input-text' type='tel' placeholder='" . esc_attr__( "000.000.000-00", $this->id ) . "' " . $this->field_name( "card-holder-cpf" ) . "/>
-			</p>
-			<p class='form-row form-row-wide' >
-				<label for='{$id}-card-holder-phone' >" . esc_html__( "Celular do titular", $this->id ) . "&nbsp;<span class='required'>*</span></label>
-				<input id='{$id}-card-holder-phone' class='input-text' type='tel' placeholder='" . esc_attr__( "(00) 00000-0000", $this->id ) . "' " . $this->field_name( "card-holder-phone" ) . "/>
-			</p>";
-		}
+		$id = esc_attr( $this->id );
+
+		echo "<p class='form-row form-row-wide' >
+			<label for='{$id}-card-holder-name' >" . esc_html__( "Nome do titular", $this->id ) . "&nbsp;<span class='required' >*</span></label>
+			<input id='{$id}-card-holder-name' class='input-text' type='text' placeholder='" . esc_attr__( "Informe o nome do titular", $this->id ) . "' " . $this->field_name( "card-holder-name" ) . " />
+		</p>
+		<p class='form-row form-row-wide' >
+			<label for='{$id}-card-holder-cpf' >" . esc_html__( "CPF do titular", $this->id ) . "&nbsp;<span class='required'>*</span></label>
+			<input id='{$id}-card-holder-cpf' class='input-text' type='tel' placeholder='" . esc_attr__( "000.000.000-00", $this->id ) . "' " . $this->field_name( "card-holder-cpf" ) . "/>
+		</p>
+		<p class='form-row form-row-wide' >
+			<label for='{$id}-card-holder-phone' >" . esc_html__( "Celular do titular", $this->id ) . "&nbsp;<span class='required'>*</span></label>
+			<input id='{$id}-card-holder-phone' class='input-text' type='tel' placeholder='" . esc_attr__( "(00) 00000-0000", $this->id ) . "' " . $this->field_name( "card-holder-phone" ) . "/>
+		</p>";
 	}
 
 	/**
 	 * Checkout form fields start.
 	 *
-	 * @param [type] $id
+	 * @since 1.0.0
+	 *
+	 * @param string $id
+	 *
 	 * @return void
 	 */
-	public function form_fields_end( $id )
+	public function form_fields_end( string $id ) : void
 	{
-		if ( $id == $this->id )
-		{
-			$id = esc_attr( $this->id );
+		if ( $id != $this->id )
+			return;
 
-			echo "<p class='form-row form-row-wide' >
-				<label for='{$id}-card-installment' >" . esc_html__( "Parcelas", $this->id ) . "&nbsp;<span class='required' >*</span></label>
-				<select id='{$id}-card-installment' class='input-text' style='width:100%; color:#999' " . $this->field_name( "card-installment" ) . " ></select>
-			</p>";
-		}
+		$id = esc_attr( $this->id );
 
+		echo "<p class='form-row form-row-wide' >
+			<label for='{$id}-card-installment' >" . esc_html__( "Parcelas", $this->id ) . "&nbsp;<span class='required' >*</span></label>
+			<select id='{$id}-card-installment' class='input-text' style='width:100%; color:#999' " . $this->field_name( "card-installment" ) . " ></select>
+		</p>";
 	}
 
 	/**
 	 * Payment Fields Hook.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
 	public function payment_fields()
 	{
@@ -524,11 +554,13 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	}
 
 	/**
-	 * Get User IP
+	 * Get User IP.
+	 *
+	 * @since 1.0.0
 	 *
 	 * @return string
 	 */
-	public function get_user_ip()
+	public function get_user_ip() : string
 	{
 		if ( !empty( $_SERVER[ "HTTP_CLIENT_IP" ] ) )
 		{
@@ -547,14 +579,16 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	}
 
 	/**
-	 * Process the payment
-	 * Function called by WooCommerce to process the payment
+	 * Process the payment.
+	 * Function called by WooCommerce to process the payment.
 	 *
-	 * @since 	1.0.0
-	 * @param  	int $order_id
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param int 	$order_id
+	 *
+	 * @return array
 	 */
-	public function process_payment( $order_id )
+	public function process_payment( $order_id ) : array
 	{
 		$notice        = "<b>" . $this->title . "</b>:";
 
@@ -707,23 +741,18 @@ class Triibo_Payment_Card extends WC_Payment_Gateway_CC
 	}
 
 	/**
-	 * Register log
+	 * Register log.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$message
-	 * @param 	boolean $is_error
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @param string 	$message
+	 * @param boolean 	$is_error
+	 *
+	 * @return void
 	 */
-	public function log( $message, $is_error = false )
+	public function log( string $message, bool $is_error = false ) : void
 	{
-		if ( $this->debug == "yes" )
-		{
+		if ( $is_error || $this->debug == "yes" )
 			$this->log->add( $this->id, $message );
-		}
-		else if ( $is_error )
-		{
-			$this->log->add( $this->id, $message );
-		}
 	}
-
 }

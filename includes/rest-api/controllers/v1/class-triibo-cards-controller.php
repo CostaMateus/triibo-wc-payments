@@ -13,39 +13,43 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 	/**
 	 * Endpoint namespace.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
 	protected $namespace = "triibo-payments/v1";
 
 	/**
 	 * Route base.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
 	protected $rest_base = "cards";
 
 	/**
 	 * Stores the request.
 	 *
-	 * @since 	1.0.0
-	 * @var 	array
+	 * @since 1.0.0
+	 *
+	 * @var array
 	 */
-	protected $request   = [];
+	protected $request = [];
 
 	/**
-	 * Logger
+	 * Logger.
 	 *
-	 * @since 	1.0.0
-	 * @var 	wc_get_logger|WC_Logger|null
+	 * @since 1.0.0
+	 *
+	 * @var wc_get_logger|WC_Logger|null
 	 */
-	protected $log       = null;
+	protected $log = null;
 
 	/**
-	 * Construct
+	 * Construct.
 	 *
-	 * @since 	1.0.0
+	 * @since 1.0.0
 	 */
 	public function __construct()
     {
@@ -54,8 +58,12 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 
 	/**
 	 * Register the routes for users.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function register_routes()
+	public function register_routes() : void
 	{
 		register_rest_route(
 			$this->namespace,
@@ -72,13 +80,15 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 	}
 
 	/**
-	 * Validate the credit card brand
+	 * Validate the credit card brand.
 	 *
-	 * @since 	1.0.0
-	 * @param 	WP_REST_Request $request
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request 	$request
+	 *
+	 * @return string
 	 */
-	public function get_brand( $request )
+	public function get_brand( $request ) : string
 	{
 		$tpc     = Triibo_Payment_Card::get_instance();
 		$service = $tpc->get_service();
@@ -142,13 +152,15 @@ class Triibo_Cards_Controller extends WP_REST_Controller
 				]
 			];
 
-			$response = $node->brand( $token, $params );
+			$response = $node->brand( token: $token, params: $params );
 
 			if ( !$response[ "success" ] )
 				$tpc->log( json_encode( [ $user_id, $params, $response ] ) );
 
 			return json_encode( $response[ "data" ] );
 		}
+
+		return "";
 	}
 
 }

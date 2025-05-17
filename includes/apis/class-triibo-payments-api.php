@@ -13,23 +13,25 @@ class Triibo_Payments_Api
 	/**
 	 * Gateway class.
 	 *
-	 * @since 	1.0.0
-	 * @var 	Triibo_Payment_Billet|Triibo_Payment_Card|Triibo_Payment_Pix
+	 * @since 1.0.0
+	 *
+	 * @var Triibo_Payment_Billet|Triibo_Payment_Card|Triibo_Payment_Pix
 	 */
 	protected $gateway;
 
 	/**
 	 * API class.
 	 *
-	 * @since 	1.0.0
-	 * @var 	Triibo_Api_Node
+	 * @since 1.0.0
+	 *
+	 * @var Triibo_Api_Node
 	 */
 	protected $node;
 
 	/**
 	 * Construct
 	 *
-	 * @since 	1.0.0
+	 * @since 1.0.0
 	 */
 	public function __construct( $gateway = null, $node = null )
 	{
@@ -40,86 +42,96 @@ class Triibo_Payments_Api
 	/**
 	 * Generate token for use in API calls
 	 *
-	 * @since 	1.0.0
-     * @param   string  $uid
-     * @param   integer $user_id
-	 * @return 	string
+	 * @since 1.5.0 	Refactored
+	 * @since 1.0.0
+	 *
+	 * @param string 	$uid
+	 * @param integer 	$user_id
+	 *
+	 * @return string
 	 */
-	public function generate_token( $uid, $user_id )
+	public function generate_token( $uid, $user_id ) : string
 	{
-		if ( $this->node->status() )
+		if ( ! $this->node->status() )
 		{
-			$resp = $this->node->auth( "uid: {$uid}" );
+			$this->log( "ERROR - generate_token : Node is not available." );
+			return "";
+		}
 
-			if ( $resp[ "success" ] )
-			{
-				$token    = $resp[ "data"  ][ "token" ];
-				$validity = ( new DateTime() )->format( "Y-m-d H:i:s" );
+		$resp = $this->node->auth( token: "uid: {$uid}" );
 
-				update_user_meta( $user_id, "_triibo_auth_token",    $token    );
-				update_user_meta( $user_id, "_triibo_auth_validity", $validity );
-
-				return $token;
-			}
-			else
-			{
-				$this->log( "INFO - generate_token : " . json_encode( [
-					"code"    => $resp[ "code"    ],
-					"message" => $resp[ "message" ],
-					"error"   => $resp[ "error"   ]
+		if ( ! $resp[ "success" ] )
+		{
+			$this->log( "INFO - generate_token : " . json_encode( [
+				"code"    => $resp[ "code"    ],
+				"message" => $resp[ "message" ],
+				"error"   => $resp[ "error"   ]
 				] ) );
 
-				return $this->generate_token( $uid, $user_id );
-			}
+			return $this->generate_token( $uid, $user_id );
 		}
+
+		$token    = $resp[ "data"  ][ "token" ];
+		$validity = ( new DateTime() )->format( "Y-m-d H:i:s" );
+
+		update_user_meta( $user_id, "_triibo_auth_token",    $token    );
+		update_user_meta( $user_id, "_triibo_auth_validity", $validity );
+
+		return $token;
 	}
 
 	/**
 	 * Checks token validity, if expired, generates a new one
 	 *
-	 * @since 	1.0.0
-     * @param   integer $user_id
-	 * @return 	string
+	 * @since 1.5.0 	Refactored
+	 * @since 1.0.0
+	 *
+     * @param integer 	$user_id
+	 *
+	 * @return string
 	 */
-	public function validate_token( $user_id )
+	public function validate_token( $user_id ) : ?string
 	{
-		$uid      = get_user_meta( $user_id, "_triibo_id",            true );
-		$token    = get_user_meta( $user_id, "_triibo_auth_token",    true );
-		$validity = get_user_meta( $user_id, "_triibo_auth_validity", true );
+		$uid      = get_user_meta( $user_id, "_triibo_id", true );
 
-        if ( !$uid   ) return null;
+        if ( !$uid )
+			return null;
+
+		$token    = get_user_meta( $user_id, "_triibo_auth_token", true );
 
 		if ( !$token )
 		{
 			$this->log( "INFO - validate_token : user without token $user_id" );
+
 			return $this->generate_token( $uid, $user_id );
 		}
-		else
+
+		$validity = get_user_meta( $user_id, "_triibo_auth_validity", true );
+
+		$dtval    = DateTime::createFromFormat( "Y-m-d H:i:s", $validity );
+		$diff     = ( new DateTime() )->diff( $dtval );
+
+		if ( $diff->d > 0 || $diff->h > 10 )
 		{
-			$dtval = DateTime::createFromFormat( "Y-m-d H:i:s", $validity );
-			$now   = new DateTime();
-			$diff  = $now->diff( $dtval );
-
-			if ( $diff->d > 0 || $diff->h > 10 )
-			{
-				$this->log( "INFO - validate_token : experied token $user_id" );
-				return $this->generate_token( $uid, $user_id );
-			}
-
-			return $token;
+			$this->log( "INFO - validate_token : expired token $user_id" );
+			return $this->generate_token( $uid, $user_id );
 		}
+
+		return $token;
 	}
 
 	/**
-	 * Checks if card has already been tokenized
+	 * Checks if card has already been tokenized.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string $token
-	 * @param 	string $number
-	 * @param 	string $brand
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param string 	$token
+	 * @param string 	$number
+	 * @param string 	$brand
+	 *
+	 * @return array
 	 */
-	private function check_card_token( $token, $number, $brand )
+	private function check_card_token( $token, $number, $brand ) : array
 	{
 		$params   = [
 			"payload" => [
@@ -131,7 +143,7 @@ class Triibo_Payments_Api
 			]
 		];
 
-		$response = $this->node->check_token( $token, $params );
+		$response = $this->node->check_token( token: $token, params: $params );
 
 		$this->log( "INFO - check_card_token : " . json_encode( [ $params, $response ] ) );
 
@@ -139,14 +151,16 @@ class Triibo_Payments_Api
 	}
 
 	/**
-	 * Tokeniza um cartão
+	 * Tokeniza um cartão.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string  $token
-	 * @param 	array   $data
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param string 	$token
+	 * @param array 	$data
+	 *
+	 * @return array
 	 */
-	private function create_card_token( $token, $data )
+	private function create_card_token( $token, $data ) : array
 	{
 		$params   = [
 			"payload" => [
@@ -174,12 +188,14 @@ class Triibo_Payments_Api
 	/**
 	 * Deletes a tokenized card
 	 *
-	 * @since 	1.0.0
-	 * @param 	string $token
-	 * @param 	string $cardIndex
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param string 	$token
+	 * @param string 	$cardIndex
+	 *
+	 * @return array
 	 */
-	private function delete_card_token( $token, $cardIndex )
+	private function delete_card_token( $token, $cardIndex ) : array
 	{
 		$params = [
 			"payload" => [
@@ -188,7 +204,7 @@ class Triibo_Payments_Api
 			]
 		];
 
-		$response = $this->node->delete_token( $token, $params );
+		$response = $this->node->delete_token( token: $token, params: $params );
 
 		$this->log( "INFO - delete_card_token : " . json_encode( [ $params, $response ] ) );
 
@@ -198,71 +214,75 @@ class Triibo_Payments_Api
 	/**
 	 * Returns the card's token, if it doesn't have it, tokenizes it.
 	 *
-	 * @since 	1.0.0
-	 * @param 	array $posted
-	 * @return 	array
+	 * @since 1.5.0 	Refactored
+	 * @since 1.0.0
+	 *
+	 * @param array 	$posted
+	 *
+	 * @return array
 	 */
-	public function status_card( $posted )
+	public function status_card( $posted ) : array
 	{
 		$number   = substr( $posted[ "card_number" ], -4 );
 		$response = $this->check_card_token( $posted[ "token" ], $number, $posted[ "brand" ] );
 
-		// CARD NOT TOKENIZED
-		if ( !$response[ "success" ] )
-		{
-			$data     = [
-				"holder"         => $posted[ "holder"      ],
-				"cardNumber"     => $posted[ "card_number" ],
-				"expirationDate" => $posted[ "month"       ] . "/" . $posted[ "year" ],
-				"securityCode"   => $posted[ "cvv"         ],
-				"brand"          => $posted[ "brand"       ],
-			];
-
-            if ( $this->gateway->get_service() == "asaas" )
-                $data[ "infoAsaas" ] = $posted[ "infoAsaas" ];
-
-			// CREATING CARD TOKEN
-			$response = $this->create_card_token( $posted[ "token" ], $data );
-
-			// CARD TOKEN CREATION FAILURE
-			if ( !$response[ "success" ] )
-			{
-				$error = "Falha ao consultar token.";
-				$this->log( "ERROR - create_card_token : " . json_encode( [ $error, $response ] ), true );
-
-				return [
-					"success" => false,
-					"error"   => "$error (cod EP2)"
-				];
-			}
-
-			$created    = true;
-			$tokenIndex = $response[ "data" ][ "tokenInfo" ][ "index" ];
-		}
 		// CARD ALREADY TOKENIZED
-		else
+		if ( $response[ "success" ] )
 		{
-			$created    = false;
-			$tokenIndex = $response[ "data" ][ "tokenInfo" ][ "index" ];
+			return [
+				"success"    => true,
+				"created"    => false,
+				"tokenIndex" => $response[ "data" ][ "tokenInfo" ][ "index" ],
+			];
 		}
+
+		// CARD NOT TOKENIZED
+		$data     = [
+			"holder"         => $posted[ "holder"      ],
+			"cardNumber"     => $posted[ "card_number" ],
+			"expirationDate" => $posted[ "month"       ] . "/" . $posted[ "year" ],
+			"securityCode"   => $posted[ "cvv"         ],
+			"brand"          => $posted[ "brand"       ],
+		];
+
+		if ( $this->gateway->get_service() == "asaas" )
+			$data[ "infoAsaas" ] = $posted[ "infoAsaas" ];
+
+		// CREATING CARD TOKEN
+		$response = $this->create_card_token( $posted[ "token" ], $data );
+
+		// CARD TOKEN CREATION SUCCESS
+		if ( $response[ "success" ] )
+		{
+			return [
+				"success"    => true,
+				"created"    => true,
+				"tokenIndex" => $response[ "data" ][ "tokenInfo" ][ "index" ],
+			];
+		}
+
+		// CARD TOKEN CREATION FAILURE
+		$error = "Falha ao consultar token.";
+		$this->log( "ERROR - create_card_token : " . json_encode( [ $error, $response ] ), true );
 
 		return [
-			"success"    => true,
-			"cretead"    => $created,
-			"tokenIndex" => $tokenIndex,
+			"success" => false,
+			"error"   => "$error (cod EP2)"
 		];
 	}
 
 	/**
-	 * Process payment
+	 * Process payment.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$method
-	 * @param 	string 	$token
-	 * @param 	array 	$data
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param string 	$method
+	 * @param string 	$token
+	 * @param array 	$data
+	 *
+	 * @return array
 	 */
-	public function do_payment( $method, $token, $data )
+	public function do_payment( $method, $token, $data ) : array
 	{
 		$descrip  = $this->treatDescription( $data[ "description" ] );
 
@@ -287,7 +307,7 @@ class Triibo_Payments_Api
         if ( $this->gateway->get_service() == "asaas" )
             $params[ "payload" ][ "orderAsaas" ] = $data[ "infoAsaas" ];
 
-		$response = $this->node->payment( $token, $params );
+		$response = $this->node->payment( token: $token, params: $params );
 
 		$this->log( "INFO - do_payment: " . json_encode( [ $params, $response ] ) );
 
@@ -295,15 +315,17 @@ class Triibo_Payments_Api
 	}
 
 	/**
-	 * Check payment status
+	 * Check payment status.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$token
-	 * @param 	string 	$gateway
-	 * @param 	string 	$payment_id
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param string 	$token
+	 * @param string 	$gateway
+	 * @param string 	$payment_id
+	 *
+	 * @return array
 	 */
-	public function payment_status( $token, $gateway, $payment_id )
+	public function payment_status( $token, $gateway, $payment_id ) : array
 	{
 		$params   = [
 			"payload" => [
@@ -314,7 +336,7 @@ class Triibo_Payments_Api
 			]
 		];
 
-		$response = $this->node->payment_status( $token, $params );
+		$response = $this->node->payment_status( token: $token, params: $params );
 
 		$this->log( "INFO - payment_status: " . json_encode( [ $params, $response ] ) );
 
@@ -322,56 +344,41 @@ class Triibo_Payments_Api
 	}
 
 	/**
-	 * Treat description
+	 * Treat description.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string $text
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @param string 	$text
+	 *
+	 * @return string
 	 */
-	private function treatDescription( $text )
+	private function treatDescription( $text ) : string
 	{
 		$divider = "-";
-
-        // replace non letter or digits by divider
         $text    = preg_replace( "~[^\pL\d]+~u", $divider, $text );
-
-        // transliterate
         $text    = iconv( "utf-8", "us-ascii//TRANSLIT", $text );
-
-        // remove unwanted characters
         $text    = preg_replace( "~[^-\w]+~", "", $text );
-
-        // trim
         $text    = trim( $text, $divider );
-
-        // remove duplicate divider
         $text    = preg_replace( "~-+~", $divider, $text );
-
 		$text    = str_replace( $divider, " ", $text );
 
 		return $text;
 	}
 
 	/**
-	 * Register log
+	 * Register log.
 	 *
-	 * @since 	1.0.0
-	 * @param 	string 	$message
-	 * @param 	boolean $is_error
-	 * @return 	void
+	 * @since 1.5.0 	Refactored
+	 * @since 1.0.0
+	 *
+	 * @param string 	$message
+	 * @param boolean 	$is_error
+	 *
+	 * @return void
 	 */
-	private function log( $message, $is_error = false )
+	private function log( $message, $is_error = false ) : void
 	{
-		$id  = $this->gateway->get_id();
-		$log = $this->gateway->get_log();
-
-		if ( $this->gateway->get_debug() == "yes" )
-		{
-			$log->add( $id, $message );
-		}
-		else if ( $is_error )
-		{
-			$log->add( $id, $message );
-		}
+		if ( $is_error || $this->gateway->get_debug() == "yes" )
+			$this->gateway->get_log()->add( $this->gateway->get_id(), $message );
 	}
 }

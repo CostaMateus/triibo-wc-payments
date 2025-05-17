@@ -5,110 +5,123 @@
  * Description: 			Meios de pagamento Triibo para WooCommerce. Dependências: Triibo API Services e WooCommerce.
  * Author: 					Mateus Costa
  * Author URI: 				https://costamateus.com.br/
- * Version: 				1.4.1
- * Text Domain: 			triibo_payments
- * Requires at least: 		6.4
- * Requires PHP: 			7.4
- * WC requires at least: 	8.0
- * WC tested up to: 		8.2
+ * Version: 				1.5.0
+ * Text Domain: 			triibo-payments
+ * Requires Plugins:        triibo-api-services, woocommerce, woocommerce-extra-checkout-fields-for-brazil
+ * Requires at least: 		6.6
+ * Requires PHP: 			8.0
+ * WC requires at least: 	8.7.1
+ * WC tested up to: 		9.8.0
  *
- * @package 	Triibo_Payments
- * @version 	1.4.1
+ * @package Triibo_Payments
+ *
+ * @version 1.5.0
  */
+
+use WeDevs\Dokan\ProductSections\Featured;
+
 defined( "ABSPATH" ) || exit;
 
-if ( !function_exists( "is_plugin_active" ) ) require_once( ABSPATH . "wp-admin/includes/plugin.php" );
+/**
+ * @since 1.5.0
+ */
+$__te_active_plugins   = apply_filters( hook_name: "active_plugins", value: get_option( option: "active_plugins" ) );
+$__te_requires_plugins = [
+	"triibo-api-services/triibo-api-services.php",
+	"woocommerce/woocommerce.php",
+	"woocommerce-extra-checkout-fields-for-brazil/woocommerce-extra-checkout-fields-for-brazil.php"
+];
 
-add_action( "plugins_loaded", [ "Triibo_Payments", "get_instance" ], 222 );
+/**
+ * @since 1.5.0
+ */
+foreach ( $__te_requires_plugins as $plugin )
+	if ( ! in_array( needle: $plugin, haystack: $__te_active_plugins, strict: true ) )
+		return;
+
+/**
+ * Load Triibo Payments.
+ *
+ * @since 1.0.0
+ */
+add_action( hook_name: "plugins_loaded", callback: [ "Triibo_Payments", "get_instance" ], priority: 222 );
 
 class Triibo_Payments
 {
 	/**
 	 * Plugin version.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	const VERSION = "1.4.1";
+	const VERSION = "1.5.0";
 
 	/**
 	 * Plugin domain.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	const DOMAIN  = "triibo_payments";
+	const DOMAIN = "triibo-payments";
 
 	/**
 	 * Plugin main file.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
-	const FILE    = __FILE__;
+	const FILE = __FILE__;
 
 	/**
 	 * Instance of this class.
 	 *
-	 * @since 	1.0.0
-	 * @var 	object
+	 * @since 1.0.0
+	 *
+	 * @var object
 	 */
-	protected static $instance = null;
+	protected static ?object $instance = null;
 
 	/**
 	 * Construct
 	 *
-	 * @since 	1.3.0 	Added HPOS compatibility declaration
-	 * @since 	1.1.0 	Added plugin change history
-	 * @since 	1.0.0
+	 * @since 1.3.0 	Added HPOS compatibility declaration
+	 * @since 1.1.0 	Added plugin change history
+	 * @since 1.0.0
 	 */
 	private function __construct()
     {
-		if ( !is_plugin_active( "woocommerce/woocommerce.php" ) )
-		{
-			add_action( "admin_notices", [ $this, "woocommerce_missing_notice" ] );
-			return;
-		}
+		require_once ( dirname( __FILE__ ) . "/includes/apis/class-triibo-payments-api.php"       );
+		require_once ( dirname( __FILE__ ) . "/includes/rest-api/class-triibo-payments-rest.php"  );
+		require_once ( dirname( __FILE__ ) . "/includes/gateways/class-triibo-payment-billet.php" );
+		require_once ( dirname( __FILE__ ) . "/includes/gateways/class-triibo-payment-card.php"   );
+		require_once ( dirname( __FILE__ ) . "/includes/gateways/class-triibo-payment-pix.php"    );
 
-		if ( !is_plugin_active( "triibo-api-services/triibo-api-services.php" ) )
-		{
-			add_action( "admin_notices", [ $this, "triibo_api_services_missing_notice" ] );
-			return;
-		}
+		$basename = plugin_basename( file: __FILE__ );
 
-		if ( !is_plugin_active( "woocommerce-extra-checkout-fields-for-brazil/woocommerce-extra-checkout-fields-for-brazil.php" ) )
-		{
-			add_action( "admin_notices", [ $this, "ecfb_missing_notice" ] );
-			return;
-		}
-
-		require_once ( dirname( self::FILE ) . "/includes/apis/class-triibo-payments-api.php"       );
-		require_once ( dirname( self::FILE ) . "/includes/rest-api/class-triibo-payments-rest.php"  );
-		require_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-billet.php" );
-		require_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-card.php"   );
-		require_once ( dirname( self::FILE ) . "/includes/gateways/class-triibo-payment-pix.php"    );
-
-		add_filter( "plugin_action_links_" . plugin_basename( self::FILE ), [ $this, "plugin_action_links"      ]        );
-		add_filter( "woocommerce_payment_gateways",                         [ $this, "register_gateways"        ], 99, 1 );
+		add_filter( hook_name: "plugin_action_links_{$basename}", callback: [ $this, "plugin_action_links" ] );
+		add_filter( hook_name: "woocommerce_payment_gateways",    callback: [ $this, "register_gateways"   ], priority: 99 );
 
 		/**
 		 * @since 1.1.0
 		 */
-		add_filter( "plugin_row_meta",                                      [ $this, "plugin_row_meta"          ], 10, 3 );
+		add_filter( hook_name: "plugin_row_meta", callback: [ $this, "plugin_row_meta" ], accepted_args: 3 );
 
 		/**
 		 * @since 1.3.0
 		 */
-		add_action( "before_woocommerce_init",                              [ $this, "setup_hpos_compatibility" ]        );
+		add_action( hook_name: "before_woocommerce_init", callback: [ $this, "setup_hpos_compatibility" ] );
 
-		add_action( "admin_menu",                                           [ $this, "add_submenu_page"         ], 11    );
-		add_action( "triibo_api_service_add_button",                        [ $this, "add_btn"                  ], 11    );
-		add_action( "triibo_api_service_list_plugin_node",                  [ $this, "add_info_dependency"      ],       );
+		add_action( hook_name: "admin_menu",                          callback: [ $this, "add_submenu_page"    ], priority: 11 );
+		add_action( hook_name: "triibo_api_service_add_button",       callback: [ $this, "add_btn"             ], priority: 11 );
+		add_action( hook_name: "triibo_api_service_list_plugin_node", callback: [ $this, "add_info_dependency" ] );
 
 		// Order Box Actions
-		add_action( "woocommerce_order_actions",                                         [ $this, "add_order_box_action"   ] );
-		add_action( "woocommerce_order_action_wc_triibo_payments_billet_recover_status", [ $this, "process_recover_status" ] );
-		add_action( "woocommerce_order_action_wc_triibo_payments_pix_recover_status",    [ $this, "process_recover_status" ] );
+		add_action( hook_name: "woocommerce_order_actions",                                         callback: [ $this, "add_order_box_action"   ] );
+		add_action( hook_name: "woocommerce_order_action_wc_triibo_payments_billet_recover_status", callback: [ $this, "process_recover_status" ] );
+		add_action( hook_name: "woocommerce_order_action_wc_triibo_payments_pix_recover_status",    callback: [ $this, "process_recover_status" ] );
 
 		new Triibo_Payments_Rest();
 	}
@@ -116,61 +129,32 @@ class Triibo_Payments
 	/**
 	 * Return an instance of this class.
 	 *
-	 * @since 	1.0.0
-	 * @return 	object A single instance of this class.
+	 * @since 1.0.0
+	 *
+	 * @return self 	A single instance of this class
 	 */
-	public static function get_instance()
+	public static function get_instance() : self
     {
 		// If the single instance hasn't been set, set it now.
-		if ( null === self::$instance ) self::$instance = new self;
+		if ( null === self::$instance )
+			self::$instance = new self;
 
 		return self::$instance;
 	}
 
 	/**
-	 * WooCommerce missing notice.
-	 *
-	 * @since 	1.0.0
-	 * @return 	void
-	 */
-	public static function woocommerce_missing_notice()
-	{
-		require_once dirname( self::FILE ) . "/templates/notices/missing-woocommerce.php";
-	}
-
-	/**
-	 * Triibo-Api-Service missing notice.
-	 *
-	 * @since 	1.0.0
-	 * @return 	void
-	 */
-	public static function triibo_api_services_missing_notice()
-	{
-		require_once dirname( self::FILE ) . "/templates/notices/missing-triibo_api_services.php";
-	}
-
-	/**
-	 * Extra Checkout Fields for Brazil missing notice.
-	 *
-	 * @since 	1.0.0
-	 * @return 	void
-	 */
-	public static function ecfb_missing_notice()
-	{
-		require_once dirname( self::FILE ) . "/templates/notices/missing-ecfb.php";
-	}
-
-	/**
 	 * Action links.
 	 *
-	 * @since 	1.0.0
-	 * @param 	array $links
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param array 	$links
+	 *
+	 * @return array
 	 */
-	public static function plugin_action_links( $links )
+	public static function plugin_action_links( array $links ) : array
     {
-        $url            = esc_url( admin_url( "admin.php?page=wc-settings&tab=checkout" ) );
-        $text           = __( "Configurações", self::DOMAIN );
+        $url            = esc_url( url: admin_url( path: "admin.php?page=wc-settings&tab=checkout" ) );
+        $text           = __( text: "Configurações", domain: self::DOMAIN );
 		$plugin_links   = [];
 		$plugin_links[] = "<a href='{$url}' >{$text}</a>";
 
@@ -180,22 +164,25 @@ class Triibo_Payments
 	/**
 	 * Get templates path.
 	 *
-	 * @since 	1.0.0
-	 * @return 	string
+	 * @since 1.0.0
+	 *
+	 * @return string
 	 */
-	public static function get_templates_path()
+	public static function get_templates_path() : string
     {
-		return plugin_dir_path( self::FILE ) . "templates/";
+		return plugin_dir_path( file: __FILE__ ) . "templates/";
 	}
 
 	/**
-	 * Register the gateway for use
+	 * Register the gateway for use.
 	 *
-	 * @since 	1.0.0
-	 * @param 	array $methods
-	 * @return 	array
+	 * @since 1.0.0
+	 *
+	 * @param array $methods
+	 *
+	 * @return array
 	 */
-	public function register_gateways( $methods )
+	public function register_gateways( array $methods ) : array
     {
 		$methods[] = "Triibo_Payment_Billet";
 		$methods[] = "Triibo_Payment_Card";
@@ -205,31 +192,33 @@ class Triibo_Payments
 	}
 
 	/**
-	 * Add link to changelog modal
+	 * Add link to changelog modal.
 	 *
-	 * @since 	1.1.0
-	 * @param 	array 	$plugin_meta
-	 * @param 	string 	$plugin_file
-	 * @param 	array 	$plugin_data
-	 * @return 	array
+	 * @since 1.1.0
+	 *
+	 * @param array 	$plugin_meta
+	 * @param string 	$plugin_file
+	 * @param array 	$plugin_data
+	 *
+	 * @return array
 	 */
-	public function plugin_row_meta( $plugin_meta, $plugin_file, $plugin_data )
+	public function plugin_row_meta( array $plugin_meta, string $plugin_file, array $plugin_data ) : array
 	{
-		$path = path_join( WP_PLUGIN_DIR, $plugin_file );
+		$path = path_join( base: WP_PLUGIN_DIR, path: $plugin_file );
 
 		if ( DIRECTORY_SEPARATOR == "\\" )
 			$path = str_replace( "/", "\\", $path );
 
-        if ( self::FILE === $path )
+        if ( __FILE__ === $path )
 		{
-            $url = plugins_url( "readme.txt", self::FILE );
+            $url = plugins_url( path: "readme.txt", plugin: __FILE__ );
 
             $plugin_meta[] = sprintf(
                 "<a href='%s' class='thickbox open-plugin-details-modal' aria-label='%s' data-title='%s'>%s</a>",
                 add_query_arg( "TB_iframe", "true", $url ),
-                esc_attr( sprintf( __( "More information about %s" ), $plugin_data[ "Name" ] ) ),
-                esc_attr( $plugin_data[ "Name" ] ),
-                __( "Histórico de alterações" )
+                esc_attr( text: sprintf( __( text: "More information about %s" ), $plugin_data[ "Name" ] ) ),
+                esc_attr( text: $plugin_data[ "Name" ] ),
+                __( text: "Histórico de alterações" )
             );
         }
 
@@ -239,8 +228,9 @@ class Triibo_Payments
 	/**
 	 * Setup WooCommerce HPOS compatibility.
 	 *
-	 * @since 	1.3.0
-	 * @return 	void
+	 * @since 1.3.0
+	 *
+	 * @return void
 	 */
 	public function setup_hpos_compatibility() : void
 	{
@@ -250,52 +240,55 @@ class Triibo_Payments
 		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) )
 		{
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
-				"custom_order_tables",
-				__FILE__,
-				true
+				feature_id: "custom_order_tables",
+				plugin_file:__FILE__,
+				positive_compatibility: true
 			);
 		}
 	}
 
 	/**
-	 * Add submenu to Triibo menu
+	 * Add submenu to Triibo menu.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function add_submenu_page()
+	public function add_submenu_page() : void
 	{
 		add_submenu_page(
-			Triibo_Api_Services::get_name(),
-			"Triibo Payments",
-			"Payments",
-			"manage_options",
-			self::DOMAIN . "-settings",
-			[ $this, "display_admin_menu_settings" ]
+			parent_slug: Triibo_Api_Services::get_name(),
+			page_title : "Triibo Payments",
+			menu_title : "Payments",
+			capability : "manage_options",
+			menu_slug  : self::DOMAIN . "-settings",
+			callback   : [ $this, "display_admin_menu_settings" ]
 		);
 	}
 
 	/**
-	 * Display admin menu settings
+	 * Display admin menu settings.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function display_admin_menu_settings()
+	public function display_admin_menu_settings() : void
 	{
-		require_once ( dirname( self::FILE ) . "/templates/admin/settings.php" );
+		require_once ( dirname( __FILE__ ) . "/templates/admin/settings.php" );
 	}
 
 	/**
 	 * Add text to ecosystem description
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function add_btn()
+	public function add_btn() : void
 	{
-        $url  = esc_url( admin_url( "admin.php?page=wc-settings&tab=checkout" ) );
-		$text = __( "WC Configurações", self::DOMAIN );
+        $url  = esc_url( url: admin_url( path: "admin.php?page=wc-settings&tab=checkout" ) );
+		$text = __( text: "WC Configurações", domain: self::DOMAIN );
 		$link = "<a href='{$url}' >{$text}</a>";
 
 		echo "<p>Triibo Payments | {$link}</p>";
@@ -304,10 +297,11 @@ class Triibo_Payments
 	/**
 	 * Add text to description which api it depends on
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function add_info_dependency()
+	public function add_info_dependency() : void
 	{
 		echo "<p> - Triibo Payments</p>";
 	}
@@ -315,12 +309,14 @@ class Triibo_Payments
 	/**
 	 * Add custom action to order box.
 	 *
-	 * @since 	1.4.1 	Validating if the $theorder has the $code.
-	 * @since 	1.0.0
-	 * @param 	array 	$actions
-	 * @return 	array
+	 * @since 1.4.1 	Validating if the $theorder has the $code
+	 * @since 1.0.0
+	 *
+	 * @param array 	$actions
+	 *
+	 * @return array
 	 */
-	public function add_order_box_action( $actions )
+	public function add_order_box_action( $actions ) : array
 	{
 		global $theorder;
 
@@ -332,26 +328,29 @@ class Triibo_Payments
 		if ( $method != $billet->get_id() && $method != $pix->get_id() )
 			return $actions;
 
-		$code   = $theorder->get_meta( "_triibo_payments_code" );
+		$code   = $theorder->get_meta( key: "_triibo_payments_code" );
 
 		if ( !$code )
 			return $actions;
 
-		if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( "on-hold" ) )
-		{
-			if ( $method == $billet->get_id() )
-				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet->get_id() );
+		$billet_id = $billet->get_id();
+		$pix_id    = $pix->get_id();
 
-			if ( $method == $pix->get_id() )
-				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix->get_id() );
+		if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( status: "on-hold" ) )
+		{
+			if ( $method == $billet_id )
+				$actions[ "wc_{$billet_id}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet_id );
+
+			if ( $method == $pix_id )
+				$actions[ "wc_{$pix_id}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix_id );
 		}
-		elseif ( $theorder->has_status( "on-hold" ) )
+		elseif ( $theorder->has_status( status: "on-hold" ) )
 		{
-			if ( $method == $billet->get_id() )
-				$actions[ "wc_{$billet->get_id()}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet->get_id() );
+			if ( $method == $billet_id )
+				$actions[ "wc_{$billet_id}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet_id );
 
-			if ( $method == $pix->get_id() )
-				$actions[ "wc_{$pix->get_id()}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix->get_id() );
+			if ( $method == $pix_id )
+				$actions[ "wc_{$pix_id}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix_id );
 		}
 
 		return $actions;
@@ -360,14 +359,16 @@ class Triibo_Payments
 	/**
 	 * Process custom action order to recover billet data/status.
 	 *
-	 * @since 	1.4.1 	Validating if the $order has the $code.
-	 * @since 	1.0.0
-	 * @param 	object 	$order
-	 * @return 	void
+	 * @since 1.4.1 	Validating if the $order has the $code
+	 * @since 1.0.0
+	 *
+	 * @param object 	$order
+	 *
+	 * @return void
 	 */
-	public function process_recover_status( $order )
+	public function process_recover_status( object $order ) : void
 	{
-		$code     = $order->get_meta( "_triibo_payments_code" );
+		$code     = $order->get_meta( key: "_triibo_payments_code" );
 
 		if ( !$code )
 			return;
@@ -376,8 +377,8 @@ class Triibo_Payments
 		$method   = ( $code[ "type" ] == "BILLET" ) ? Triibo_Payment_Billet::get_instance() : Triibo_Payment_Pix::get_instance();
 		$api      = $method->get_api();
 
-		$token    = $api->validate_token( $order->user_id );
-		$response = $api->payment_status( $token, $code[ "gateway" ], $code[ "paymentId" ] );
+		$token    = $api->validate_token( user_id: $order->user_id );
+		$response = $api->payment_status( token: $token, gateway: $code[ "gateway" ], paymentId: $code[ "paymentId" ] );
 
 		if ( $response[ "success" ] && isset( $response[ "data" ] ) )
 		{
@@ -387,33 +388,32 @@ class Triibo_Payments
 			if ( is_array( $payment_info[ "invoice" ] ) )
 			{
 				$code[ "invoice" ] = $payment_info[ "invoice" ];
-				$order->update_meta_data( "_triibo_payments_code", $code );
+				$order->update_meta_data( key: "_triibo_payments_code", value: $code );
 			}
 
 			// se teve mudança de status e foi aprovado, muda pra processando
 			if ( $payment_info[ "changed" ] && $payment_info[ "approved" ] )
 			{
 				$order->payment_complete();
-				$order->update_status( "processing", __( "Triibo_Payments: Pagamento aprovado", $id ) );
+				$order->update_status( new_status: "processing", note: __( text: "Triibo_Payments: Pagamento aprovado", domain: $id ) );
 			}
 
 			// se teve mudança de status e não foi aprovado, muda pra falha
 			if ( $payment_info[ "changed" ] && !$payment_info[ "approved" ] )
 			{
-				$order->update_status( "failed", __( "Triibo_Payments: Pagamento malsucedido", $id ) );
+				$order->update_status( new_status: "failed", note: __( text: "Triibo_Payments: Pagamento malsucedido", domain: $id ) );
 			}
 
 			$payment_info[ "orderId" ] = $order->ID;
 			unset( $payment_info[ "invoice" ] );
 
-			$method->log( "INFO - payment_status: " . json_encode( $payment_info ) );
+			$method->log( message: "INFO - payment_status: " . json_encode( $payment_info ) );
 		}
 		else
 		{
-			$order->add_order_note( "Falha na consulta do dados/status do pagamento." );
+			$order->add_order_note( note: "Falha na consulta do dados/status do pagamento." );
 		}
 
 		$order->save();
 	}
-
 }

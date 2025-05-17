@@ -13,39 +13,43 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Endpoint namespace.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
 	protected $namespace = "triibo-payments/v1";
 
 	/**
 	 * Route base.
 	 *
-	 * @since 	1.0.0
-	 * @var 	string
+	 * @since 1.0.0
+	 *
+	 * @var string
 	 */
 	protected $rest_base = "orders";
 
 	/**
 	 * Stores the request.
 	 *
-	 * @since 	1.0.0
-	 * @var 	array
+	 * @since 1.0.0
+	 *
+	 * @var array
 	 */
-	protected $request   = [];
+	protected $request = [];
 
 	/**
-	 * Logger
+	 * Logger.
 	 *
-	 * @since 	1.0.0
-	 * @var 	wc_get_logger|WC_Logger|null
+	 * @since 1.0.0
+	 *
+	 * @var wc_get_logger|WC_Logger|null
 	 */
-	protected $log       = null;
+	protected $log = null;
 
 	/**
 	 * Construct
 	 *
-	 * @since 	1.0.0
+	 * @since 1.0.0
 	 */
 	public function __construct()
     {
@@ -55,10 +59,11 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	/**
 	 * Register the routes for orders.
 	 *
-	 * @since 	1.0.0
-	 * @return 	void
+	 * @since 1.0.0
+	 *
+	 * @return void
 	 */
-	public function register_routes()
+	public function register_routes() : void
 	{
 		register_rest_route(
 			$this->namespace,
@@ -75,13 +80,15 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	}
 
 	/**
-	 * Update order status
+	 * Update order status.
 	 *
-	 * @since 	1.0.0
-	 * @param 	WP_REST_Request $request
-	 * @return 	WP_REST_Response
+	 * @since 1.0.0
+	 *
+	 * @param WP_REST_Request 	$request
+	 *
+	 * @return WP_REST_Response
 	 */
-	public function update_order( $request )
+	public function update_order( $request ) : WP_REST_Response
 	{
         /**
          * Asaas status

@@ -13,8 +13,8 @@ class Triibo_Payments_Rest
 	/**
 	 * Initialize the plugin public actions.
      *
-	 * @since   1.4.0   Added delete images class.
-	 * @since   1.0.0
+	 * @since 1.4.0     Added delete images class
+	 * @since 1.0.0
 	 */
     public function __construct()
 	{
@@ -28,10 +28,11 @@ class Triibo_Payments_Rest
     /**
      * Register REST API routes.
      *
-	 * @since   1.0.0
-	 * @return  void
+	 * @since 1.0.0
+     *
+	 * @return void
      */
-    public function register_rest_routes()
+    public function register_rest_routes() : void
     {
         foreach ( self::get_rest_namespaces() as $controllers )
         {
@@ -46,11 +47,12 @@ class Triibo_Payments_Rest
     /**
      * Get API namespaces - new namespaces should be registered here.
      *
-	 * @since   1.4.0   Added delete images class.
-	 * @since   1.0.0
-     * @return  array List of Namespaces and Main controller classes.
+	 * @since 1.4.0   Added delete images class
+	 * @since 1.0.0
+     *
+     * @return array   List of Namespaces and Main controller classes
      */
-    private static function get_rest_namespaces()
+    private static function get_rest_namespaces() : array
     {
         return apply_filters(
             "triibo_payments_rest_namespaces",

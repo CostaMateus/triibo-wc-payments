@@ -13,41 +13,45 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 	/**
 	 * Endpoint namespace.
 	 *
-	 * @since 	1.4.0
-	 * @var 	string
+	 * @since 1.4.0
+	 *
+	 * @var string
 	 */
 	protected $namespace = "triibo/v1";
 
 	/**
 	 * Route base.
 	 *
-	 * @since 	1.4.0
-	 * @var 	string
+	 * @since 1.4.0
+	 *
+	 * @var string
 	 */
 	protected $rest_base = "delete";
 
 	/**
 	 * Stores the request.
 	 *
-	 * @since 	1.4.0
-	 * @var 	array
+	 * @since 1.4.0
+	 *
+	 * @var array
 	 */
-	protected $request   = [];
+	protected $request = [];
 
 	/**
-	 * Construct
+	 * Construct.
 	 *
-	 * @since 	1.4.0
+	 * @since 1.4.0
 	 */
 	public function __construct() {}
 
 	/**
 	 * Register the routes for orders.
 	 *
-	 * @since 	1.4.0
-	 * @return 	void
+	 * @since 1.4.0
+	 *
+	 * @return void
 	 */
-	public function register_routes()
+	public function register_routes() : void
 	{
 		register_rest_route(
 			$this->namespace,
@@ -77,11 +81,13 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 	}
 
 	/**
+	 * @since 1.4.0
 	 *
-	 * @param 	WP_REST_Request 	$request
-	 * @return 	bool
+	 * @param WP_REST_Request 	$request
+	 *
+	 * @return bool
 	 */
-	public function permissions_check( WP_REST_Request $request )
+	public function permissions_check( WP_REST_Request $request ) : bool
 	{
 		return in_array(
 			$request->get_header( "x-api-key" ),
@@ -93,11 +99,13 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 	}
 
 	/**
+	 * @since 1.4.0
 	 *
-	 * @param 	WP_REST_Request 	$request
-	 * @return 	WP_REST_Response|WP_Error
+	 * @param WP_REST_Request 	$request
+	 *
+	 * @return WP_REST_Response|WP_Error
 	 */
-    public function delete_images( WP_REST_Request $request )
+    public function delete_images( WP_REST_Request $request ) : WP_REST_Response|WP_Error
 	{
         $posts   = $request->get_param( "posts" );
         $type    = $request->get_param( "type"  );
