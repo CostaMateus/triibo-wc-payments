@@ -2,11 +2,12 @@
 /**
  * Triibo Payments Rest class
  *
- * @author      Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_Payments/Rest
- * @version 	1.0.0
+ * @author Mateus Costa <mateus@costamateus.com.br>
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
-defined( 'ABSPATH' ) || exit;
+defined( constant_name: 'ABSPATH' ) || exit;
 
 class Triibo_Payments_Rest
 {
@@ -18,11 +19,11 @@ class Triibo_Payments_Rest
 	 */
     public function __construct()
 	{
-		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-cards-controller.php";
-		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-orders-controller.php";
-		require_once dirname( __FILE__ ) . "/controllers/v1/class-triibo-fs-data-delete-controller.php";
+		require_once dirname( path: __FILE__ ) . "/controllers/v1/class-triibo-cards-controller.php";
+		require_once dirname( path: __FILE__ ) . "/controllers/v1/class-triibo-orders-controller.php";
+		require_once dirname( path: __FILE__ ) . "/controllers/v1/class-triibo-fs-data-delete-controller.php";
 
-        add_action( "rest_api_init", [ $this, "register_rest_routes" ] );
+        add_action( hook_name: "rest_api_init", callback: [ $this, "register_rest_routes" ] );
     }
 
     /**
@@ -55,8 +56,8 @@ class Triibo_Payments_Rest
     private static function get_rest_namespaces() : array
     {
         return apply_filters(
-            "triibo_payments_rest_namespaces",
-            [
+            hook_name: "triibo_payments_rest_namespaces",
+            value    : [
                 "triibo-payments/v1" => [
                     "cards"  => "Triibo_Cards_Controller",
                     "orders" => "Triibo_Orders_Controller",

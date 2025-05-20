@@ -17,16 +17,13 @@
  *
  * @version 1.5.0
  */
-
-use WeDevs\Dokan\ProductSections\Featured;
-
-defined( "ABSPATH" ) || exit;
+defined( constant_name: "ABSPATH" ) || exit;
 
 /**
  * @since 1.5.0
  */
-$__te_active_plugins   = apply_filters( hook_name: "active_plugins", value: get_option( option: "active_plugins" ) );
-$__te_requires_plugins = [
+$__tp_active_plugins   = apply_filters( hook_name: "active_plugins", value: get_option( option: "active_plugins" ) );
+$__tp_requires_plugins = [
 	"triibo-api-services/triibo-api-services.php",
 	"woocommerce/woocommerce.php",
 	"woocommerce-extra-checkout-fields-for-brazil/woocommerce-extra-checkout-fields-for-brazil.php"
@@ -35,8 +32,8 @@ $__te_requires_plugins = [
 /**
  * @since 1.5.0
  */
-foreach ( $__te_requires_plugins as $plugin )
-	if ( ! in_array( needle: $plugin, haystack: $__te_active_plugins, strict: true ) )
+foreach ( $__tp_requires_plugins as $plugin )
+	if ( ! in_array( needle: $plugin, haystack: $__tp_active_plugins, strict: true ) )
 		return;
 
 /**
@@ -93,11 +90,11 @@ class Triibo_Payments
 	 */
 	private function __construct()
     {
-		require_once ( dirname( __FILE__ ) . "/includes/apis/class-triibo-payments-api.php"       );
-		require_once ( dirname( __FILE__ ) . "/includes/rest-api/class-triibo-payments-rest.php"  );
-		require_once ( dirname( __FILE__ ) . "/includes/gateways/class-triibo-payment-billet.php" );
-		require_once ( dirname( __FILE__ ) . "/includes/gateways/class-triibo-payment-card.php"   );
-		require_once ( dirname( __FILE__ ) . "/includes/gateways/class-triibo-payment-pix.php"    );
+		require_once ( dirname( path: __FILE__ ) . "/includes/apis/class-triibo-payments-api.php"       );
+		require_once ( dirname( path: __FILE__ ) . "/includes/rest-api/class-triibo-payments-rest.php"  );
+		require_once ( dirname( path: __FILE__ ) . "/includes/gateways/class-triibo-payment-billet.php" );
+		require_once ( dirname( path: __FILE__ ) . "/includes/gateways/class-triibo-payment-card.php"   );
+		require_once ( dirname( path: __FILE__ ) . "/includes/gateways/class-triibo-payment-pix.php"    );
 
 		$basename = plugin_basename( file: __FILE__ );
 
@@ -207,7 +204,7 @@ class Triibo_Payments
 		$path = path_join( base: WP_PLUGIN_DIR, path: $plugin_file );
 
 		if ( DIRECTORY_SEPARATOR == "\\" )
-			$path = str_replace( "/", "\\", $path );
+			$path = str_replace( search: "/", replace: "\\", subject: $path );
 
         if ( __FILE__ === $path )
 		{
@@ -234,14 +231,14 @@ class Triibo_Payments
 	 */
 	public function setup_hpos_compatibility() : void
 	{
-		if ( defined( "WC_VERSION" ) && version_compare( WC_VERSION, "7.1", "<" ) )
+		if ( defined( constant_name: "WC_VERSION" ) && version_compare( version1: WC_VERSION, version2: "7.1", operator: "<" ) )
 			return;
 
-		if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) )
+		if ( class_exists( class: \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) )
 		{
 			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
-				feature_id: "custom_order_tables",
-				plugin_file:__FILE__,
+				feature_id            : "custom_order_tables",
+				plugin_file           :__FILE__,
 				positive_compatibility: true
 			);
 		}
@@ -275,7 +272,7 @@ class Triibo_Payments
 	 */
 	public function display_admin_menu_settings() : void
 	{
-		require_once ( dirname( __FILE__ ) . "/templates/admin/settings.php" );
+		require_once ( dirname( path: __FILE__ ) . "/templates/admin/settings.php" );
 	}
 
 	/**
@@ -336,21 +333,21 @@ class Triibo_Payments
 		$billet_id = $billet->get_id();
 		$pix_id    = $pix->get_id();
 
-		if ( !is_array( $code[ "invoice" ] ) && $theorder->has_status( status: "on-hold" ) )
+		if ( !is_array( value: $code[ "invoice" ] ) && $theorder->has_status( status: "on-hold" ) )
 		{
 			if ( $method == $billet_id )
-				$actions[ "wc_{$billet_id}_recover_status" ] = __( "Recuperar boleto - {$billet->get_method_title()}", $billet_id );
+				$actions[ "wc_{$billet_id}_recover_status" ] = __( text: "Recuperar boleto - {$billet->get_method_title()}", domain: $billet_id );
 
 			if ( $method == $pix_id )
-				$actions[ "wc_{$pix_id}_recover_status"    ] = __( "Recuperar pix - {$pix->get_method_title()}", $pix_id );
+				$actions[ "wc_{$pix_id}_recover_status"    ] = __( text: "Recuperar pix - {$pix->get_method_title()}", domain: $pix_id );
 		}
 		elseif ( $theorder->has_status( status: "on-hold" ) )
 		{
 			if ( $method == $billet_id )
-				$actions[ "wc_{$billet_id}_recover_status" ] = __( "Atualizar status boleto - {$billet->get_method_title()}", $billet_id );
+				$actions[ "wc_{$billet_id}_recover_status" ] = __( text: "Atualizar status boleto - {$billet->get_method_title()}", domain: $billet_id );
 
 			if ( $method == $pix_id )
-				$actions[ "wc_{$pix_id}_recover_status"    ] = __( "Atualizar status pix - {$pix->get_method_title()}", $pix_id );
+				$actions[ "wc_{$pix_id}_recover_status"    ] = __( text: "Atualizar status pix - {$pix->get_method_title()}", domain: $pix_id );
 		}
 
 		return $actions;
@@ -378,42 +375,42 @@ class Triibo_Payments
 		$api      = $method->get_api();
 
 		$token    = $api->validate_token( user_id: $order->user_id );
-		$response = $api->payment_status( token: $token, gateway: $code[ "gateway" ], paymentId: $code[ "paymentId" ] );
+		$response = $api->payment_status( token: $token, gateway: $code[ "gateway" ], payment_id: $code[ "paymentId" ] );
 
-		if ( $response[ "success" ] && isset( $response[ "data" ] ) )
-		{
-			$payment_info = $response[ "data" ][ "paymentStatus" ];
-
-			// se invoice retornou, atualiza metadata
-			if ( is_array( $payment_info[ "invoice" ] ) )
-			{
-				$code[ "invoice" ] = $payment_info[ "invoice" ];
-				$order->update_meta_data( key: "_triibo_payments_code", value: $code );
-			}
-
-			// se teve mudança de status e foi aprovado, muda pra processando
-			if ( $payment_info[ "changed" ] && $payment_info[ "approved" ] )
-			{
-				$order->payment_complete();
-				$order->update_status( new_status: "processing", note: __( text: "Triibo_Payments: Pagamento aprovado", domain: $id ) );
-			}
-
-			// se teve mudança de status e não foi aprovado, muda pra falha
-			if ( $payment_info[ "changed" ] && !$payment_info[ "approved" ] )
-			{
-				$order->update_status( new_status: "failed", note: __( text: "Triibo_Payments: Pagamento malsucedido", domain: $id ) );
-			}
-
-			$payment_info[ "orderId" ] = $order->ID;
-			unset( $payment_info[ "invoice" ] );
-
-			$method->log( message: "INFO - payment_status: " . json_encode( $payment_info ) );
-		}
-		else
+		if ( ! $response[ "success" ] && ! isset( $response[ "data" ] ) )
 		{
 			$order->add_order_note( note: "Falha na consulta do dados/status do pagamento." );
+			$order->save();
+			return;
 		}
 
+		$payment_info = $response[ "data" ][ "paymentStatus" ];
+
+		// se invoice retornou, atualiza metadata
+		if ( is_array( value: $payment_info[ "invoice" ] ) )
+		{
+			$code[ "invoice" ] = $payment_info[ "invoice" ];
+			$order->update_meta_data( key: "_triibo_payments_code", value: $code );
+		}
+
+		// se teve mudança de status e foi aprovado, muda pra processando
+		if ( $payment_info[ "changed" ] && $payment_info[ "approved" ] )
+		{
+			$order->payment_complete();
+			$order->update_status( new_status: "processing", note: __( text: "Triibo_Payments: Pagamento aprovado", domain: $id ) );
+		}
+
+		// se teve mudança de status e não foi aprovado, muda pra falha
+		if ( $payment_info[ "changed" ] && !$payment_info[ "approved" ] )
+			$order->update_status( new_status: "failed", note: __( text: "Triibo_Payments: Pagamento malsucedido", domain: $id ) );
+
+		$payment_info[ "orderId" ] = $order->ID;
+		unset( $payment_info[ "invoice" ] );
+
+		$method->log( message: "INFO - payment_status: " . json_encode( value: $payment_info ) );
+
 		$order->save();
+
+		return;
 	}
 }

@@ -2,9 +2,10 @@
 /**
  * Triibo FS Data Delete Controller class
  *
- * @author      Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo/Rest
- * @version 	1.4.0
+ * @author Mateus Costa <mateus@costamateus.com.br>
+ *
+ * @since 1.4.0
+ * @version 1.4.0
  */
 defined( "ABSPATH" ) || exit;
 
@@ -54,9 +55,9 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 	public function register_routes() : void
 	{
 		register_rest_route(
-			$this->namespace,
-			"/{$this->rest_base}/fs-data",
-			[
+			route_namespace: $this->namespace,
+			route: "/{$this->rest_base}/fs-data",
+			args: [
 				[
 					"methods"             => WP_REST_Server::CREATABLE, // POST
 					"callback"            => [ $this, "delete_images"     ],
@@ -90,8 +91,8 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 	public function permissions_check( WP_REST_Request $request ) : bool
 	{
 		return in_array(
-			$request->get_header( "x-api-key" ),
-			[
+			needle: $request->get_header( key: "x-api-key" ),
+			haystack: [
 				"54723162306C6F6A7052646D4C6170693030",
 				"0303960716C4D6462507A6F6C60326132745"
 			]
@@ -107,8 +108,8 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 	 */
     public function delete_images( WP_REST_Request $request ) : WP_REST_Response|WP_Error
 	{
-        $posts   = $request->get_param( "posts" );
-        $type    = $request->get_param( "type"  );
+        $posts   = $request->get_param( key: "posts" );
+        $type    = $request->get_param( key: "type"  );
         $results = [];
 
         foreach ( $posts as $post_id )
@@ -116,27 +117,27 @@ class Triibo_FS_Data_Delete_Controller extends WP_REST_Controller
 			$response = false;
 
 			if ( $type === "product" )
-				$response = wp_delete_post( $post_id, true );
+				$response = wp_delete_post( post_id: $post_id, force_delete: true );
 
 			if ( $type === "attachment" )
-				$response = wp_delete_attachment( $post_id, true );
+				$response = wp_delete_attachment( post_id: $post_id, force_delete: true );
 
-			if ( !$response )
+			if ( ! $response )
 			{
 				$results[] = [
 					"post_id" => $post_id,
 					"status"  => "error",
 				];
+
+				continue;
 			}
-			else
-			{
-				$results[] = [
-					"post_id" => $post_id,
-					"status"  => "success",
-				];
-			}
+
+			$results[] = [
+				"post_id" => $post_id,
+				"status"  => "success",
+			];
         }
 
-        return rest_ensure_response( $results );
+        return rest_ensure_response( response: $results );
     }
 }

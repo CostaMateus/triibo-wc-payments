@@ -2,11 +2,12 @@
 /**
  * HTML email instructions.
  *
- * @author 		Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_Payments/Emails
- * @version 	1.0.0
+ * @author Mateus Costa <mateus@costamateus.com.br>
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
-defined( "ABSPATH" ) || exit;
+defined( constant_name: "ABSPATH" ) || exit;
 
 ?>
 
@@ -32,6 +33,6 @@ defined( "ABSPATH" ) || exit;
 
 	<p>
 		Para visualizar seus pedidos
-		<a href="<?php echo esc_url( get_permalink( get_option( "woocommerce_myaccount_page_id" ) ) ); ?>" title="Minha conta" >clique aqui</a>.
+		<a href="<?php echo esc_url( url: get_permalink( post: get_option( option: "woocommerce_myaccount_page_id" ) ) ); ?>" title="Minha conta" >clique aqui</a>.
 	</p>
 </div>

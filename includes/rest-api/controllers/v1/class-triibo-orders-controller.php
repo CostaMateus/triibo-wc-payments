@@ -2,14 +2,24 @@
 /**
  * Triibo Orders Controller class
  *
- * @author      Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_Payments/Rest
- * @version 	1.0.0
+ * @author Mateus Costa <mateus@costamateus.com.br>
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
 defined( "ABSPATH" ) || exit;
 
 class Triibo_Orders_Controller extends WP_REST_Controller
 {
+	/**
+	 * Unique identifier for the controller.
+	 *
+	 * @since 1.5.0
+	 *
+	 * @var string
+	 */
+	protected $id = Triibo_Payments::DOMAIN . "-api-orders";
+
 	/**
 	 * Endpoint namespace.
 	 *
@@ -38,25 +48,6 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	protected $request = [];
 
 	/**
-	 * Logger.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @var wc_get_logger|WC_Logger|null
-	 */
-	protected $log = null;
-
-	/**
-	 * Construct
-	 *
-	 * @since 1.0.0
-	 */
-	public function __construct()
-    {
-        $this->log = ( function_exists( "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
-    }
-
-	/**
 	 * Register the routes for orders.
 	 *
 	 * @since 1.0.0
@@ -66,9 +57,9 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	public function register_routes() : void
 	{
 		register_rest_route(
-			$this->namespace,
-			"/$this->rest_base/update-payment",
-			[
+			route_namespace: $this->namespace,
+			route: "/$this->rest_base/update-payment",
+			args: [
 				[
 					"methods"             => WP_REST_Server::READABLE, // GET
 					"callback"            => [ $this, "update_order" ],
@@ -88,7 +79,7 @@ class Triibo_Orders_Controller extends WP_REST_Controller
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function update_order( $request ) : WP_REST_Response
+	public function update_order( WP_REST_Request $request ) : WP_REST_Response
 	{
         /**
          * Asaas status
@@ -109,56 +100,87 @@ class Triibo_Orders_Controller extends WP_REST_Controller
          * 'AWAITING_RISK_ANALYSIS'       : 'Pagamento em análise',
          */
 
-		$key = $request->get_header( "x-api-key" );
+		$key = $request->get_header( key: "x-api-key" );
 
 		if ( $key !== "54723162306C6F6A7052646D4C6170693030" && $key !== "0303960716C4D6462507A6F6C60326132745" )
 		{
-			return new WP_REST_Response( [
-				"success" => false,
-				"message" => "Unauthorized",
-			], 401 );
+			return new WP_REST_Response(
+				status: 401,
+				data  : [
+					"success" => false,
+					"message" => "Unauthorized",
+				],
+			);
 		}
 
-		$order_id = $request->get_param( "orderId"  );
-		$status   = $request->get_param( "status"   );
-		$approved = filter_var( $request->get_param( "approved" ), FILTER_VALIDATE_BOOLEAN );
+		$order_id = $request->get_param( key: "orderId"  );
+		$status   = $request->get_param( key: "status"   );
+		$approved = filter_var( value: $request->get_param( key: "approved" ), filter: FILTER_VALIDATE_BOOLEAN );
 
-		$order    = wc_get_order( $order_id );
+		$order    = wc_get_order( the_order: $order_id );
 
-		$this->log->add( Triibo_Payments::DOMAIN, "INFO - get_order : ID {$order_id} : {$status}" );
+		$this->log(
+			is_error: true,
+			level   : "info",
+			message : ( ! $order ) ? "Order not found" : ( $approved ? "Order approved" : "Order failed" ),
+			context : [
+				"order_id" => $order_id,
+				"status"   => $status,
+				"approved" => $approved ? "true" : "false",
+			]
+		);
 
 		if ( !$order )
 		{
-			$this->log->add( Triibo_Payments::DOMAIN, "WARNING - not_found_order : ID {$order_id}" );
-
-			return new WP_REST_Response( [
-				"success" => false,
-				"message" => "Order not found",
-			], 404 );
+			return new WP_REST_Response(
+				status: 404,
+				data  : [
+					"success" => false,
+					"message" => "Order not found",
+				],
+			);
 		}
 
 		if ( $approved )
 		{
-			$this->log->add( Triibo_Payments::DOMAIN, "INFO - finalize_order : ID " . $order_id . " : " . $status );
-
 			$order->payment_complete();
-			$order->update_status( "processing" );
+			$order->update_status( new_status: "processing" );
 			$order->save();
 
-			return new WP_REST_Response( [
+			return new WP_REST_Response( data: [
 				"success" => true,
 				"message" => "Order successfully updated, with status processing",
-			], 200 );
+			], status: 200 );
 		}
 
-		$this->log->add( Triibo_Payments::DOMAIN, "INFO - order_failed : ID " . $order_id . " : " . $status );
-
-		$order->update_status( "failed" );
+		$order->update_status( new_status: "failed" );
 		$order->save();
 
-		return new WP_REST_Response( [
+		return new WP_REST_Response( data: [
 			"success" => true,
 			"message" => "Order successfully updated, with status failed",
-		], 200 );
+		], status: 200 );
+	}
+
+	/**
+	 * Register log.
+	 *
+	 * @since 1.5.0
+     *
+	 * @param string 	$level 		The log level (e.g., 'error', 'info')
+	 * @param string 	$message 	The log message
+	 * @param array 	$context 	Additional context for the log message
+	 * @param bool 		$is_error 	Whether the log is an error
+     *
+     * @return void
+	 */
+	private function log( string $level = "info", string $message, array $context = [], bool $is_error = false ) : void
+	{
+		$logger  = ( function_exists( function: "wc_get_logger" ) ) ? wc_get_logger() : new WC_Logger();
+
+		$context = array_merge( $context, [ "source" => $this->id ] );
+
+		if ( $is_error )
+			$logger->$level( $message, $context );
 	}
 }

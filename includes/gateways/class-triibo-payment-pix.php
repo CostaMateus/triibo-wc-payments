@@ -92,7 +92,7 @@ class Triibo_Payment_Pix extends WC_Payment_Gateway
 	{
 		self::$instance = $this;
 
-        $this->id                 = Triibo_Payments::DOMAIN . "_pix";
+        $this->id                 = Triibo_Payments::DOMAIN . "-pix";
         $this->icon               = apply_filters(
 			hook_name: "woocommerce_" . $this->id . "_icon",
 			value    : plugins_url(
