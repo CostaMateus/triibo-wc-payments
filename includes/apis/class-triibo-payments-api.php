@@ -2,11 +2,12 @@
 /**
  * Triibo Payments Api class
  *
- * @author      Mateus Costa <mateus@costamateus.com.br>
- * @package 	Triibo_Payments/Api
- * @version 	1.0.0
+ * @author Mateus Costa <mateus@costamateus.com.br>
+ *
+ * @since 1.0.0
+ * @version 1.0.0
  */
-defined( 'ABSPATH' ) || exit;
+defined( constant_name: 'ABSPATH' ) || exit;
 
 class Triibo_Payments_Api
 {
@@ -32,11 +33,14 @@ class Triibo_Payments_Api
 	 * Construct
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param null|mixed 			$gateway
+	 * @param null|Triibo_Api_Node 	$node
 	 */
-	public function __construct( $gateway = null, $node = null )
+	public function __construct( mixed $gateway = null, ?Triibo_Api_Node $node = null )
 	{
-		$this->node    = $node;
 		$this->gateway = $gateway;
+		$this->node    = $node;
 	}
 
 	/**
@@ -46,15 +50,24 @@ class Triibo_Payments_Api
 	 * @since 1.0.0
 	 *
 	 * @param string 	$uid
-	 * @param integer 	$user_id
+	 * @param int 		$user_id
 	 *
 	 * @return string
 	 */
-	public function generate_token( $uid, $user_id ) : string
+	public function generate_token( string $uid, int $user_id ) : string
 	{
 		if ( ! $this->node->status() )
 		{
-			$this->log( "ERROR - generate_token : Node is not available." );
+			$this->gateway->log(
+				is_error: true,
+				level   : "error",
+				message : "generate_token : Node is not available.",
+				context : [
+					"uid"     => $uid,
+					"user_id" => $user_id,
+				]
+			);
+
 			return "";
 		}
 
@@ -62,20 +75,19 @@ class Triibo_Payments_Api
 
 		if ( ! $resp[ "success" ] )
 		{
-			$this->log( "INFO - generate_token : " . json_encode( [
-				"code"    => $resp[ "code"    ],
-				"message" => $resp[ "message" ],
-				"error"   => $resp[ "error"   ]
-				] ) );
+			$this->gateway->log(
+				message : "generate_token : Failed to generate token.",
+				context : [ "response" => $resp, ]
+			);
 
-			return $this->generate_token( $uid, $user_id );
+			return $this->generate_token( uid: $uid, user_id: $user_id );
 		}
 
 		$token    = $resp[ "data"  ][ "token" ];
-		$validity = ( new DateTime() )->format( "Y-m-d H:i:s" );
+		$validity = ( new DateTime() )->format( format: "Y-m-d H:i:s" );
 
-		update_user_meta( $user_id, "_triibo_auth_token",    $token    );
-		update_user_meta( $user_id, "_triibo_auth_validity", $validity );
+		update_user_meta( user_id: $user_id, meta_key: "_triibo_auth_token",    meta_value: $token    );
+		update_user_meta( user_id: $user_id, meta_key: "_triibo_auth_validity", meta_value: $validity );
 
 		return $token;
 	}
@@ -86,35 +98,48 @@ class Triibo_Payments_Api
 	 * @since 1.5.0 	Refactored
 	 * @since 1.0.0
 	 *
-     * @param integer 	$user_id
+     * @param int 		$user_id
 	 *
 	 * @return string
 	 */
-	public function validate_token( $user_id ) : ?string
+	public function validate_token( int $user_id ) : ?string
 	{
-		$uid      = get_user_meta( $user_id, "_triibo_id", true );
+		$uid      = get_user_meta( user_id: $user_id, key: "_triibo_id", single: true );
 
         if ( !$uid )
 			return null;
 
-		$token    = get_user_meta( $user_id, "_triibo_auth_token", true );
+		$token    = get_user_meta( user_id: $user_id, key: "_triibo_auth_token", single: true );
 
 		if ( !$token )
 		{
-			$this->log( "INFO - validate_token : user without token $user_id" );
+			$this->gateway->log(
+				message : "validate_token : user without token {$user_id}",
+				context : [
+					"uid"     => $uid,
+					"user_id" => $user_id,
+				]
+			);
 
-			return $this->generate_token( $uid, $user_id );
+			return $this->generate_token( uid: $uid, user_id: $user_id );
 		}
 
-		$validity = get_user_meta( $user_id, "_triibo_auth_validity", true );
+		$validity = get_user_meta( user_id: $user_id, key: "_triibo_auth_validity", single: true );
 
-		$dtval    = DateTime::createFromFormat( "Y-m-d H:i:s", $validity );
-		$diff     = ( new DateTime() )->diff( $dtval );
+		$dtval    = DateTime::createFromFormat( format: "Y-m-d H:i:s", datetime: $validity );
+		$diff     = ( new DateTime() )->diff( targetObject: $dtval );
 
 		if ( $diff->d > 0 || $diff->h > 10 )
 		{
-			$this->log( "INFO - validate_token : expired token $user_id" );
-			return $this->generate_token( $uid, $user_id );
+			$this->gateway->log(
+				message : "validate_token : expired token {$user_id}",
+				context : [
+					"uid"     => $uid,
+					"user_id" => $user_id,
+				]
+			);
+
+			return $this->generate_token( uid: $uid, user_id: $user_id );
 		}
 
 		return $token;
@@ -131,7 +156,7 @@ class Triibo_Payments_Api
 	 *
 	 * @return array
 	 */
-	private function check_card_token( $token, $number, $brand ) : array
+	private function check_card_token( string $token, string $number, string $brand ) : array
 	{
 		$params   = [
 			"payload" => [
@@ -145,7 +170,13 @@ class Triibo_Payments_Api
 
 		$response = $this->node->check_token( token: $token, params: $params );
 
-		$this->log( "INFO - check_card_token : " . json_encode( [ $params, $response ] ) );
+		$this->gateway->log(
+			message : "check_card_token",
+			context : [
+				"params"   => $params,
+				"response" => $response,
+			]
+		);
 
 		return $response;
 	}
@@ -160,7 +191,7 @@ class Triibo_Payments_Api
 	 *
 	 * @return array
 	 */
-	private function create_card_token( $token, $data ) : array
+	private function create_card_token( string $token, array $data ) : array
 	{
 		$params   = [
 			"payload" => [
@@ -178,9 +209,12 @@ class Triibo_Payments_Api
         if ( $this->gateway->get_service() == "asaas" )
             $params[ "payload" ][ "cardAsaas" ] = $data[ "infoAsaas" ];
 
-		$response = $this->node->create_token( $token, $params );
+		$response = $this->node->create_token( token: $token, params: $params );
 
-		$this->log( "INFO - create_card_token : " . json_encode( $response ) );
+		$this->gateway->log(
+			message : "create_card_token",
+			context : [ "response" => $response, ]
+		);
 
 		return $response;
 	}
@@ -195,7 +229,7 @@ class Triibo_Payments_Api
 	 *
 	 * @return array
 	 */
-	private function delete_card_token( $token, $cardIndex ) : array
+	private function delete_card_token( string $token, string $cardIndex ) : array
 	{
 		$params = [
 			"payload" => [
@@ -206,7 +240,13 @@ class Triibo_Payments_Api
 
 		$response = $this->node->delete_token( token: $token, params: $params );
 
-		$this->log( "INFO - delete_card_token : " . json_encode( [ $params, $response ] ) );
+		$this->gateway->log(
+			message : "delete_card_token",
+			context : [
+				"params"   => $params,
+				"response" => $response,
+			]
+		);
 
 		return $response;
 	}
@@ -221,10 +261,10 @@ class Triibo_Payments_Api
 	 *
 	 * @return array
 	 */
-	public function status_card( $posted ) : array
+	public function status_card( array $posted ) : array
 	{
-		$number   = substr( $posted[ "card_number" ], -4 );
-		$response = $this->check_card_token( $posted[ "token" ], $number, $posted[ "brand" ] );
+		$number   = substr( string: $posted[ "card_number" ], offset: -4 );
+		$response = $this->check_card_token( token: $posted[ "token" ], number: $number, brand: $posted[ "brand" ] );
 
 		// CARD ALREADY TOKENIZED
 		if ( $response[ "success" ] )
@@ -249,7 +289,7 @@ class Triibo_Payments_Api
 			$data[ "infoAsaas" ] = $posted[ "infoAsaas" ];
 
 		// CREATING CARD TOKEN
-		$response = $this->create_card_token( $posted[ "token" ], $data );
+		$response = $this->create_card_token( token: $posted[ "token" ], data: $data );
 
 		// CARD TOKEN CREATION SUCCESS
 		if ( $response[ "success" ] )
@@ -263,7 +303,15 @@ class Triibo_Payments_Api
 
 		// CARD TOKEN CREATION FAILURE
 		$error = "Falha ao consultar token.";
-		$this->log( "ERROR - create_card_token : " . json_encode( [ $error, $response ] ), true );
+
+		$this->gateway->log(
+			is_error: true,
+			message : "create_card_token : Failed to create card token.",
+			context : [
+				"error"    => $error,
+				"response" => $response,
+			]
+		);
 
 		return [
 			"success" => false,
@@ -282,9 +330,9 @@ class Triibo_Payments_Api
 	 *
 	 * @return array
 	 */
-	public function do_payment( $method, $token, $data ) : array
+	public function do_payment( string $method, string $token, array $data ) : array
 	{
-		$descrip  = $this->treatDescription( $data[ "description" ] );
+		$descrip  = $this->treatDescription( text: $data[ "description" ] );
 
 		$params   = [
 			"payload" => [
@@ -309,7 +357,13 @@ class Triibo_Payments_Api
 
 		$response = $this->node->payment( token: $token, params: $params );
 
-		$this->log( "INFO - do_payment: " . json_encode( [ $params, $response ] ) );
+		$this->gateway->log(
+			message : "do_payment",
+			context : [
+				"params"   => $params,
+				"response" => $response,
+			]
+		);
 
 		return $response;
 	}
@@ -325,7 +379,7 @@ class Triibo_Payments_Api
 	 *
 	 * @return array
 	 */
-	public function payment_status( $token, $gateway, $payment_id ) : array
+	public function payment_status( string $token, string $gateway, string $payment_id ) : array
 	{
 		$params   = [
 			"payload" => [
@@ -338,7 +392,13 @@ class Triibo_Payments_Api
 
 		$response = $this->node->payment_status( token: $token, params: $params );
 
-		$this->log( "INFO - payment_status: " . json_encode( [ $params, $response ] ) );
+		$this->gateway->log(
+			message : "payment_status",
+			context : [
+				"params"   => $params,
+				"response" => $response,
+			]
+		);
 
 		return $response;
 	}
@@ -352,33 +412,16 @@ class Triibo_Payments_Api
 	 *
 	 * @return string
 	 */
-	private function treatDescription( $text ) : string
+	private function treatDescription( string $text ) : string
 	{
 		$divider = "-";
-        $text    = preg_replace( "~[^\pL\d]+~u", $divider, $text );
-        $text    = iconv( "utf-8", "us-ascii//TRANSLIT", $text );
-        $text    = preg_replace( "~[^-\w]+~", "", $text );
-        $text    = trim( $text, $divider );
-        $text    = preg_replace( "~-+~", $divider, $text );
-		$text    = str_replace( $divider, " ", $text );
+        $text    = preg_replace( pattern: "~[^\pL\d]+~u", replacement: $divider, subject: $text );
+        $text    = iconv( from_encoding: "utf-8", to_encoding: "us-ascii//TRANSLIT", string: $text );
+        $text    = preg_replace( pattern: "~[^-\w]+~", replacement: "", subject: $text );
+        $text    = trim( string: $text, characters: $divider );
+        $text    = preg_replace( pattern: "~-+~", replacement: $divider, subject: $text );
+		$text    = str_replace( search: $divider, replace: " ", subject: $text );
 
 		return $text;
-	}
-
-	/**
-	 * Register log.
-	 *
-	 * @since 1.5.0 	Refactored
-	 * @since 1.0.0
-	 *
-	 * @param string 	$message
-	 * @param boolean 	$is_error
-	 *
-	 * @return void
-	 */
-	private function log( $message, $is_error = false ) : void
-	{
-		if ( $is_error || $this->gateway->get_debug() == "yes" )
-			$this->gateway->get_log()->add( $this->gateway->get_id(), $message );
 	}
 }
