@@ -21,7 +21,6 @@ class Triibo_Payments_Rest
 	{
 		require_once dirname( path: __FILE__ ) . "/controllers/v1/class-triibo-cards-controller.php";
 		require_once dirname( path: __FILE__ ) . "/controllers/v1/class-triibo-orders-controller.php";
-		require_once dirname( path: __FILE__ ) . "/controllers/v1/class-triibo-fs-data-delete-controller.php";
 
         add_action( hook_name: "rest_api_init", callback: [ $this, "register_rest_routes" ] );
     }
@@ -61,9 +60,6 @@ class Triibo_Payments_Rest
                 "triibo-payments/v1" => [
                     "cards"  => "Triibo_Cards_Controller",
                     "orders" => "Triibo_Orders_Controller",
-                ],
-                "triibo/v1"          => [
-                    "delete" => "Triibo_FS_Data_Delete_Controller",
                 ]
             ]
         );
