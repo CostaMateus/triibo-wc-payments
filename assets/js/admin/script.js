@@ -4,7 +4,7 @@
 
 	$( function ()
     {
-		function pagareSwitchTypeCC( checked )
+		function triiboSwitchTypeCC( checked )
 		{
 			let installment = $( "#woocommerce_triibo_payments_card_installments" ).closest( "tr" );
 
@@ -14,10 +14,10 @@
                 installment.hide();
 		}
 
-        pagareSwitchTypeCC( $( "#woocommerce_triibo_payments_card_installment_type" ).is( ":checked" ) );
+        triiboSwitchTypeCC( $( "#woocommerce_triibo_payments_card_installment_type" ).is( ":checked" ) );
 
 		$( "body" ).on( "change", "#woocommerce_triibo_payments_card_installment_type", function () {
-            pagareSwitchTypeCC( $( this ).is( ":checked" ) );
+            triiboSwitchTypeCC( $( this ).is( ":checked" ) );
 		});
 
 	});
